@@ -10,9 +10,9 @@ deplacement1=0
 def raffraichissement():
     fenetre.blit(fond, (0,0))
     fenetre.blit(perso1, position_perso1_1)
-    fenetre.blit(canon1, position_canon1_1)
+    fenetre.blit(canon1_1, position_canon1_1)
     fenetre.blit(perso2, position_perso2_1)
-    fenetre.blit(canon2, position_canon2_1)
+    fenetre.blit(canon2_1, position_canon2_1)
     fenetre.blit(missile1_1, position_missile1_1)
     fenetre.blit(missile1_2, position_missile1_2)
     fenetre.blit(missile1_3, position_missile1_3)
@@ -55,6 +55,7 @@ position_perso1_1 = perso1.get_rect()
 position_perso1_1 = position_perso.move(25,25)
 
 canon1 = pygame.image.load("canon1.png").convert_alpha()
+canon1_1=canon1
 position_canon1 = canon1.get_rect()
 position_canon1_1 = canon1.get_rect()
 position_canon1_1 = position_perso1_1
@@ -66,6 +67,7 @@ position_perso2_1 = perso2.get_rect()
 position_perso2_1 = position_perso.move(1120,550)
 
 canon2 = pygame.image.load("canon2.png").convert_alpha()
+canon2_1=canon2
 position_canon2 = canon2.get_rect()
 position_canon2_1 = canon2.get_rect()
 position_canon2_1 = position_perso2_1
@@ -105,7 +107,7 @@ while continuer==1:
 
         #Attente des événements
         for event in pygame.event.get():
-            tableau =[[1,40,30,60,0],[1,20,10,30,0],[1,50,100,190,0],[0,20,10,30,0],[1,400,300,50,1],[0,20,10,30,0],[0,20,10,30,0],[0,20,10,30,0]]
+            tableau =[[1,40,30,60,0],[1,20,10,30,0],[1,50,100,190,0],[0,20,10,30,0],[1,400,300,200,1],[0,20,10,30,0],[0,20,10,30,0],[0,20,10,30,0]]
             #liste[]=[Etat,X,Y,Angle,Chenille]
 
             #Tank1
