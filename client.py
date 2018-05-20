@@ -3,13 +3,15 @@ from pygame.locals import *
 import math
 
 #Variables
-tir1="0"
+tir1=0
+angle1=0
+deplacement1=0
 
 def raffraichissement():
     fenetre.blit(fond, (0,0))
-    fenetre.blit(perso1, position_perso1)
-    fenetre.blit(canon1_1, position_canon1_1)
-    fenetre.blit(perso2, position_perso2)
+    fenetre.blit(perso1, position_perso1_1)
+    fenetre.blit(canon1, position_canon1_1)
+    fenetre.blit(perso2, position_perso2_1)
     fenetre.blit(canon2, position_canon2_1)
     fenetre.blit(missile1_1, position_missile1_1)
     fenetre.blit(missile1_2, position_missile1_2)
@@ -47,28 +49,30 @@ fenetre.blit(fond, (0,0))
 
 #Chargement et collage du personnage
 perso1 = pygame.image.load("tank1.png").convert_alpha()
-position_perso1 = perso1.get_rect()
+position_perso = perso1.get_rect()
 position_perso1_1 = perso1.get_rect()
-position_perso1_1 = position_perso1.move(25,25)
+position_perso1_1 = position_perso.move(25,25)
 
 canon1 = pygame.image.load("canon1.png").convert_alpha()
 position_canon1 = canon1.get_rect()
 position_canon1_1 = canon1.get_rect()
+position_canon1_1 = position_perso1_1
 
 #Chargement et collage du deuxieme personnage
 perso2 = pygame.image.load("tank2.png").convert_alpha()
-position_perso2 = perso2.get_rect()
 position_perso2_1 = perso2.get_rect()
-position_perso2_1 = position_perso2.move(1120,550)
+position_perso2_1 = position_perso.move(1120,550)
 
 canon2 = pygame.image.load("canon2.png").convert_alpha()
 position_canon2 = canon2.get_rect()
 position_canon2_1 = canon2.get_rect()
+position_canon2_1 = position_perso2_1
 
 #Chargement et collage des missiles des joueurs
 missile1_1 = pygame.image.load("Missile.png").convert_alpha()
+missile = missile1_1
+position_missile = missile1_1.get_rect()
 position_missile1_1 = missile1_1.get_rect()
-missile = missile1_1.get_rect()
 position_missile1_1 = position_missile.move(200,645)
 
 missile1_2 = pygame.image.load("Missile.png").convert_alpha()
@@ -81,12 +85,15 @@ position_missile1_3 = position_missile.move(100,645)
 
 missile2_1 = pygame.image.load("Missile.png").convert_alpha()
 position_missile2_1 = missile2_1.get_rect()
+position_missile2_1=position_missile.move(400,645)
 
 missile2_2 = pygame.image.load("Missile.png").convert_alpha()
 position_missile2_2 = missile2_2.get_rect()
+position_missile2_2=position_missile.move(450,645)
 
 missile2_3 = pygame.image.load("Missile.png").convert_alpha()
 position_missile2_3 = missile2_3.get_rect()
+position_missile2_3=position_missile.move(500,645)
 
 raffraichissement()
 
@@ -96,32 +103,80 @@ while continuer==1:
 
         #Attente des événements
         for event in pygame.event.get():
-            tableau[]=[liste1[],liste2[],liste3[],liste4[],liste5[],liste6[],liste7[],liste8[])
+            tableau =[[1,40,30,60,0],[1,20,10,30,0],[1,50,100,190,0],[0,20,10,30,0],[1,400,300,50,1],[0,20,10,30,0],[0,20,10,30,0],[0,20,10,30,0]]
             #liste[]=[Etat,X,Y,Angle,Chenille]
 
             #Tank1
-            liste[]=tableau[0]
-            position_perso1_1=position_perso1.move(liste[1],liste[2])
+            liste=tableau[0]
+            x1=liste[1]
+            y1=liste[2]
+            position_perso1_1=position_perso.move(x1,y1)
             canon1_1 = pygame.transform.rotate(canon1,-liste[3])
             position_canon1_1 = position_perso1_1.move(-((canon1_1.get_height()-56)/2),-((canon1_1.get_height()-56)/2))
 
             #Tank2
-            liste[]=tableau[4]
-            position_perso2_1=position_perso2.move(liste[1]),liste[2])
+            liste=tableau[4]
+            x2=liste[1]
+            y2=liste[2]
+            position_perso2_1=position_perso.move(x2,y2)
             canon2_1 = pygame.transform.rotate(canon2,-liste[3])
             position_canon2_1 = position_perso2_1.move(-((canon2_1.get_height()-56)/2),-((canon2_1.get_height()-56)/2))
 
             #Missile1_1
-            liste[]=tableau[1]
+            liste=tableau[1]
             if liste[0]==0:
-                position_missile1_1=position_perso1.move(100,645)
+                position_missile1_1=position_missile.move(100,645)
             else:
-                position_missile1_1=position_perso2.move(liste[1],liste[2])
+                position_missile1_1=position_missile.move(liste[1],liste[2])
                 missile1_1 = pygame.transform.rotate(missile,-liste[3])
 
-            
+            #Missile1_2
+            liste=tableau[2]
+            if liste[0]==0:
+                position_missile1_2=position_missile.move(150,645)
+            else:
+                position_missile1_2=position_missile.move(liste[1],liste[2])
+                missile1_2 = pygame.transform.rotate(missile,-liste[3])
+
+
+            #Missile1_3
+            liste=tableau[3]
+            if liste[0]==0:
+                position_missile1_3=position_missile.move(200,645)
+            else:
+                position_missile1_3=position_missile.move(liste[1],liste[2])
+                missile1_3 = pygame.transform.rotate(missile,-liste[3])
+
+
+            #Missile2_1
+            liste=tableau[5]
+            if liste[0]==0:
+                position_missile2_1=position_missile.move(400,645)
+            else:
+                position_missile2_1=position_missile.move(liste[1],liste[2])
+                missile2_1 = pygame.transform.rotate(missile,-liste[3])
+
+
+            #Missile2_2
+            liste=tableau[6]
+            if liste[0]==0:
+                position_missile2_2=position_missile.move(450,645)
+            else:
+                position_missile2_2=position_missile.move(liste[1],liste[2])
+                missile2_2 = pygame.transform.rotate(missile,-liste[3])
+
+
+            #Missile2_3
+            liste=tableau[7]
+            if liste[0]==0:
+                position_missile2_3=position_missile.move(500,645)
+            else:
+                position_missile2_3=position_missile.move(liste[1],liste[2])
+                missile2_3 = pygame.transform.rotate(missile,-liste[3])
+
+            #Evenements
             if event.type == MOUSEBUTTONDOWN and event.button == 1:
-                tir="1"
+                tir1=1
             
             if event.type == MOUSEMOTION:
                 canon1_x=event.pos[0]-x1-(canon1_1.get_height()/2)
@@ -133,18 +188,21 @@ while continuer==1:
 
             if event.type == KEYDOWN:
                 if event.key == K_DOWN:
-                    deplacement1="1"
+                    deplacement1=1
                 if event.key == K_RIGHT:
-                    deplacement1="2"
+                    deplacement1=2
                 if event.key == K_UP:
-                    deplacement1="3"
+                    deplacement1=3
                 if event.key == K_LEFT:
-                    deplacement1="4"
+                    deplacement1=4
+                if event.key == K_ESCAPE:
+                    continuer=2
 
-            if event.key == K_ESCAPE:
-                continuer=2
-
-            liste2=str(str(angle1)+deplacement1+tir)
-
+            liste2=[round(angle1,2),deplacement1,tir1,continuer]
+            tir1=0
+            deplacement1=0
+            print(liste2)
             raffraichissement()
 
+
+pygame.quit()
