@@ -49,6 +49,7 @@ fenetre.blit(fond, (0,0))
 
 #Chargement et collage du personnage
 perso1 = pygame.image.load("tank1.png").convert_alpha()
+perso1_1=perso1
 position_perso = perso1.get_rect()
 position_perso1_1 = perso1.get_rect()
 position_perso1_1 = position_perso.move(25,25)
@@ -60,6 +61,7 @@ position_canon1_1 = position_perso1_1
 
 #Chargement et collage du deuxieme personnage
 perso2 = pygame.image.load("tank2.png").convert_alpha()
+perso2_1=perso2
 position_perso2_1 = perso2.get_rect()
 position_perso2_1 = position_perso.move(1120,550)
 
@@ -113,6 +115,9 @@ while continuer==1:
             position_perso1_1=position_perso.move(x1,y1)
             canon1_1 = pygame.transform.rotate(canon1,-liste[3])
             position_canon1_1 = position_perso1_1.move(-((canon1_1.get_height()-56)/2),-((canon1_1.get_height()-56)/2))
+            if liste[4]==1:
+                perso1 = pygame.transform.rotate(perso1_1, 90)
+                
 
             #Tank2
             liste=tableau[4]
@@ -121,7 +126,9 @@ while continuer==1:
             position_perso2_1=position_perso.move(x2,y2)
             canon2_1 = pygame.transform.rotate(canon2,-liste[3])
             position_canon2_1 = position_perso2_1.move(-((canon2_1.get_height()-56)/2),-((canon2_1.get_height()-56)/2))
-
+            if liste[4]==1:
+                perso2 = pygame.transform.rotate(perso2_1, 90)
+                
             #Missile1_1
             liste=tableau[1]
             if liste[0]==0:
