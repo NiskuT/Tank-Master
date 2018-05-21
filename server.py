@@ -6,26 +6,27 @@ from threading import Thread, RLock
 import threading
 from random import randrange, randint
 import time
+import pickle
 
 nbPlayer = 0
 nbMaxPlayer = 4
 lock = RLock()
 mainLock = RLock()
 workLocker = RLock()
-dataToSend = ""
 player = []
 needToDO =[]
-allIP =[]
-
+allIP =["192.168.1.38"]
+b_size_missile_x = -16
+b_size_missile_y = -6
 
 
 
 socketTCP = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 socketTCP.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-socketTCP.bind(("", 1234))
+socketTCP.bind(("", 7089))
 
 socketUDP = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-socketUDP.bind(('', 12000))
+socketUDP.bind(("192.168.1.38", 33108))
 
 
 
@@ -39,7 +40,23 @@ socketUDP.bind(('', 12000))
 #	collision missile missile
 
 
+def initMap():
+	map = open("Map2_2.txt", "r")
+	coordonnes = map.read()
+	ligne2 = coordonnes.split("\n")
+	tableau = []
 
+	for ligne_y in range(0,625):
+		for ligne_x in range(0,1200):
+			if ligne2[ligne_y][ligne_x] == "1":
+				co = [ligne_x, ligne_y]
+				tableau.append(co)
+			print("x= ", ligne_x,"y= ", ligne_y)
+	
+
+	print(tableau)
+
+	map.close()
 
 class waitForConnection(threading.Thread):
 	def __init__(self):
@@ -70,10 +87,11 @@ class threadTcpConnection(threading.Thread):
 		print("Client %s %s join the game." % (self.ip, self.port))
 		with lock:
 			if nbPlayer < nbMaxPlayer:
-				password = randint(0, 9999)
-				nom, ip = self.client.recvfrom(2048)
-				allIP.append(ip)
-				self.client.send((password+len(player).encode('utf-8')))
+				password = str(randint(1000, 9999))
+				nom, ip = self.client.recvfrom(1024)
+				#allIP.append(str(ip))
+				idClient = str(len(player))
+				self.client.send((password+idClient).encode('utf-8'))
 				connection(nom.decode('utf-8'), password)
 				self.client.close()
 
@@ -86,24 +104,15 @@ class liveDataReceive(threading.Thread):
 
 	def run(self):
 		while True:
-			data = (socketUDP.recv(1024)).decode('utf-8')
-			if len(data) != 11:
-				continue
+			data = (socketUDP.recv(1024))
+
 			with lock:
-				needToDO.append(data)
+				needToDO.append(pickle.loads(data))
+
 				#{9}{9999}{3.14}{4}{1}
 
-class liveDataSender(threading.Thread):
-	def __init__(self):
-		threading.Thread.__init__(self)
 
-
-	def run(self):
-		while True:
-			with lock:
-				self.data = dataToSend.encode('utf-8')
-			for k in allIP:
-				socketUDP.sendto(seld.data, k)
+####Controler que les données ne soient pas trop différentes des précédentes
 
 
 class mainMover(threading.Thread):
@@ -114,40 +123,117 @@ class mainMover(threading.Thread):
 
 	def run(self):
 		while(1):
-			action = "90000000000"
+			action = []
 			with mainLock:
 				try:
 					action = needToDO[-1]
 					del needToDO[-1]
 				except:
 					pass
-				id = int(action[0])
-				if id != 9:
-					if player[id].password == (action[1]+action[2]+action[3]+action[4]):
-						player[id].changeAngle(float(action[5]+action[6]+action[7]+action[8]))
-						player[id].move(int(action[9]))
-						if (player[id].maxMissile > len(player[id].shot)) and action[10] == "1":
-							player[id].shot.append(missile(player[id].position_x,player[id].position_y, player[id].angle))
+				try:
+					ID = int(action[0])
 
+					if ID <= 9:
+						if player[ID].password == str(action[1]):
+							player[ID].changeAngle(math.radians(float(action[2])))
+							player[ID].move(int(action[3]))
+
+							if (player[ID].maxMissile > len(player[ID].shot)) and action[4] == "1":
+								player[ID].shot.append(missile(player[ID].position_x,player[ID].position_y, player[ID].angle))
+				except IndexError:
+					continue
 
 class mainWorker(threading.Thread):
 
 	def __init__(self):
 		threading.Thread.__init__(self)
+		self.data = ""
 
-	def run:
+	def run(self):
 		while(1):
 			positions = []
 			
 			####missiles#####
-			for k in player:
-				for x in k.shot:
-					with workLocker:
-						x.move()
+			for k in range(2):
+				try:
+					positions.append([player[k].isAlive,player[k].tailleX, player[k].tailleY, player[k].position_x, player[k].position_y, player[k].angle, player[k].chenille, k])
+				except IndexError:
+					positions.append([0])
+
+				for x in range(3):
+					try:
+						with workLocker:
+							player[k].shot[x].move()
+						positions.append([player[k].shot[x].state, player[k].shot[x].tailleX, player[k].shot[x].tailleY, player[k].shot[x].x, player[k].shot[x].y, player[k].shot[x].angle, k, x])
+					except IndexError:
+						positions.append([0])
+
 
 			####colisions######
+			#for t in range(len(positions)):
+			#	if positions[t][0]== 1 :
+					#if (self.collision_mur(positions[t][1], positions[t][2], positions[t][1], positions[t][2])) == 0:
+					#	if t == 0 or t == 4:
+					#		player[positions[t][7]].kill()
+					#	else:
+					#		player[positions[t][6]].shot[positions[t][7]].destroy()
+					#		player[positions[t][6]].shot[positions[t][7]]
+
+					#for u in range(len(positions)):
+					#	if t == u:
+					#		continue
+					#	elif self.collision(positions[t][3], positions[t][4], positions[t][1], positions[t][2], positions[u][3], positions[u][4], positions[u][1], positions[u][2]) == 0:
+					#		if t == 0 or t == 4:
+					#			player[positions[t][7]].kill()
+					#		else:
+					#			player[positions[t][6]].shot[positions[t][7]].destroy()
+					#			del player[positions[t][6]].shot[positions[t][7]]
+
+			####envoie####
+
+			self.sender(positions)
+
+			time.sleep(1.020)
+			#mettre seulement le Thread en pause <><><>
 
 
+
+
+
+
+
+	def sender(self, serverData):
+
+		data = pickle.dumps(serverData)
+		for k in allIP:
+			try:
+				socketUDP.sendto(data, (str(k), 12000))
+			except socket.gaierror:
+				print("Not found!")
+
+	def collision_mur(pos_x, pos_y, b_size_x, b_size_y):
+		pos = [[pos_x, pos_y], [pos_x+b_size_x, pos_y], [pos_x+b_size_x, pos_y+b_size_y], [pos_x, pos_y+b_size_y]]
+		for n in range(0, 3):
+			try:
+				tableau.index(pos[n])
+				print("Pos =", pos)
+				print("collision mur")
+				return 0
+				break	
+			except ValueError:
+				pass
+		return 1
+
+	def collision(pos_x1,pos_y1,b_size_x, b_size_y, pos_x2, pos_y2, b_size_x2, b_size_y2):
+		if pos_x1 <= pos_x2 and pos_x1 + b_size_x >= pos_x2:
+			if pos_y1 <= pos_y2 and pos_y1 + b_size_y >= pos_y2:
+				print("conti")
+				return 0
+		elif pos_x2 <= pos_x1 and pos_x2 + b_size_x2 >= pos_x1:
+			if pos_y2 <= pos_y1 and pos_y2 + b_size_y2 >= pos_y1:
+				print("conti2")
+				return 0
+		return 1
 
 
 
@@ -164,63 +250,47 @@ class user():
 		self.position_x = 0
 		self.position_y = 0
 		self.angle = 0             #Angle en radian
-		self.isAlive = True		   #Est-ce que je joueur est en vie
+		self.isAlive = 1	   	   #Est-ce que je joueur est en vie
 		self.stepRange = 8		   #On se déplace de x px en x px ---> vitesse  
-
+		self.chenille = 0			#Si la valeur est 0, les chenilles sont verticales, sinon elles sont horizontales
+		self.tailleX = 56
+		self.tailleY=56			
 		self.shot = []
 		self.maxMissile = 3        #nombre maximal de missile de user sur la map
 
 	def move(self, XY):            #XY vaut 1, 2 , 3 , 4 ->avancer d'une case, droite, reculer, aller a gauche
 		
-		vecteurX0_x = (math.cos(self.angle-math.pi/2)) * self.stepRange
-		vecteurX0_y = (math.sin(self.angle-math.pi/2)) * self.stepRange
-		vecteurY0_x = (math.cos(self.angle)) * self.stepRange
-		vecteurY0_y = (math.sin(self.angle)) * self.stepRange
-
-		X = 0
-		Y = 0
 		if XY == 0:
 			pass
 		elif XY == 1:
-			X=0
-			Y=1
+			self.position_y += self.stepRange
+			self.chenille = 0
 		elif XY == 2:
-			X=1
-			Y=0
+			self.position_x += self.stepRange
+			self.chenille = 1
 		elif XY == 3:
-			X=0
-			Y=-1
+			self.position_y -= self.stepRange
+			self.chenille = 0
 		elif XY == 4:
-			X=-1
-			Y=0
+			self.position_x -= self.stepRange
+			self.chenille = 1
 
-		if X*Y != 0:
-			raise moveError("Les coordonnées de déplacement sont incorrect.")
-			#on ne peut pas se déplacer sur deux axes en même temps, donc le produit des deux doit valoir 0
-		else:
-			
-			vecteurX0_x = vecteurX0_x * X
-			vecteurX0_y = vecteurX0_y * X
-			vecteurY0_x = vecteurY0_x * Y
-			vecteurY0_y = vecteurY0_y * Y
 
-			self.position_x = round(self.position_x + vecteurX0_x + vecteurY0_x)
-			self.position_y = round(self.position_y + vecteurX0_y + vecteurY0_y)
 
 	def changeAngle(self,an):
 
 		self.angle = an
 
 	def kill(self, end):
-		self.isAlive = False
+		self.isAlive = 0
 		#compteurdepoints()
 
 		if end == False:
 
-			Nspawn = randrange(0,len(spawn))
-			self.position_x = spawn[Nspawn][0]
-			self.position_y = spawn[Nspawn][1]
-			self.isAlive = True
+			
+			self.position_x = 0
+			self.position_y = 0
+			self.isAlive = 1
 
 		else:
 			pass
@@ -242,6 +312,10 @@ class missile():
 
 		self.a = a
 		self.b = b
+
+		self.state = 1
+		self.tailleX = -16
+		self.tailleY = -6
 
 		self.stepRange = 15
 		self.t = 0
@@ -267,37 +341,30 @@ class missile():
 			self.destroy()
 
 	def destroy(self):
-		pass
+		self.state = 0
 
 
 
 
-def connection(password, name):
+def connection(name, password):
 	player.append(user(name, password))
 
 
 
-
-		
-joueur1 = user("quentin", 4597)
+#try:
+#	initMap()
+#except:
+#	pass
 
 
 
 wait = waitForConnection()
-Sender = liveDataSender()
 Receive = liveDataReceive()
 main1 = mainMover()
+main2 = mainWorker()
+
+main2.start()
 
 main1.start()
 wait.start()
-Sender.start()
 Receive.start()
-
-#joueur1.kill(False)
-while 1:
-	a = int(input("nb:"))
-	joueur1.angle = float(input("angle:"))
-	joueur1.move(a)
-	print(joueur1.position_x, joueur1.position_y)
-
-
