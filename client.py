@@ -14,11 +14,8 @@ tir1=0
 angle1=0
 deplacement1=0
 lock = RLock()
-pos = [[1,0,0,40,30,60,0],[1,0,0,20,10,30,0],[1,0,0,50,100,190,0],[0,0,0,20,10,30,0],[1,0,0,400,300,200,1],[0,0,0,20,10,30,0],[0,0,0,20,10,30,0],[0,0,0,20,10,30,0]]
 donnee = []
 
-def Laliste():
-	return pos
 
 def setPos(lst):
 	pos = lst
@@ -65,15 +62,16 @@ class udpSocket(threading.Thread):
 		UDP_IP = "192.168.1.38"
 		UDP_PORT = 12000
 		self.sock.bind((UDP_IP, UDP_PORT))
+		self.pos = [[1,0,0,40,30,60,0],[1,0,0,20,10,30,0],[1,0,0,50,100,190,0],[0,0,0,20,10,30,0],[1,0,0,400,300,200,1],[0,0,0,20,10,30,0],[0,0,0,20,10,30,0],[0,0,0,20,10,30,0]]
 
 	def run(self):
 		while(1):
 			with lock:
 				self.sock.sendto(pickle.dumps(donnee), ("192.168.1.38", 33108))
-			time.sleep(.020)
+			time.sleep(.035)
 			data, addr = self.sock.recvfrom(2048)
-			setPos(pickle.loads(data))
-			print("\n",pos)
+			self.pos = pickle.loads(data)
+			print("\n",self.pos)
 
 
 
@@ -163,7 +161,7 @@ monSocket.start()
 
 while continuer==1:
         #Attente des événements
-        tableau = Laliste()
+        tableau = monSocket.pos
         for event in pygame.event.get():
             
             #[[1,40,30,60,0],[1,20,10,30,0],[1,50,100,190,0],[0,20,10,30,0],[1,400,300,200,1],[0,20,10,30,0],[0,20,10,30,0],[0,20,10,30,0]]
