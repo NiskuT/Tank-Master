@@ -1,280 +1,376 @@
-# coding: utf-8
 #!/usr/bin/env python
-import pygame
-from pygame.locals import *
+# coding: utf-8
 import math
 import socket
 from threading import Thread, RLock
 import threading
-import pickle
+from random import randrange, randint
 import time
+import pickle
 
-#Variables
-tir1=0
-angle1=0
-deplacement1=0
+nbPlayer = 0
+nbMaxPlayer = 4
 lock = RLock()
-donnee = []
+mainLock = RLock()
+workLocker = RLock()
+player = []
+needToDO =[]
+allIP =["192.168.1.38"]
+b_size_missile_x = -16
+b_size_missile_y = -6
 
 
-def setPos(lst):
-	pos = lst
 
-def raffraichissement():
-    fenetre.blit(fond, (0,0))
-    fenetre.blit(perso1, position_perso1_1)
-    fenetre.blit(canon1_1, position_canon1_1)
-    fenetre.blit(perso2, position_perso2_1)
-    fenetre.blit(canon2_1, position_canon2_1)
-    fenetre.blit(missile1_1, position_missile1_1)
-    fenetre.blit(missile1_2, position_missile1_2)
-    fenetre.blit(missile1_3, position_missile1_3)
-    fenetre.blit(missile2_1, position_missile2_1)
-    fenetre.blit(missile2_2, position_missile2_2)
-    fenetre.blit(missile2_3, position_missile2_3)
-    pygame.display.flip()
+socketTCP = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+socketTCP.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+socketTCP.bind(("", 7089))
 
-def connect(name):
-	TCP_IP = "192.168.1.38"
-	TCP_PORT = 7089
-
-	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-	s.connect((TCP_IP, TCP_PORT))
-	s.send(name.encode('utf-8'))
-	data = (s.recv(1024)).decode('utf-8')
-	s.close()
-
-	print("received data:", data)
+socketUDP = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+socketUDP.bind(("192.168.1.38", 33108))
 
 
-	mdp = data[0]+data[1]+data[2]+data[3]
-	IDjoueur = data[4]
 
-	global password
-	global ID
-	password = int(mdp)
-	ID = int(IDjoueur)
+#def collision(XA,YA, a, ID, xb, yb, ab, idb):
 
-class udpSocket(threading.Thread):
+#def check():
+#	collision joueur joueur
+#	collision joueur map
+#	collision joueur missile
+#	collision missile map
+#	collision missile missile
+
+
+def initMap():
+	map = open("Map2_2.txt", "r")
+	coordonnes = map.read()
+	ligne2 = coordonnes.split("\n")
+	tableau = []
+
+	for ligne_y in range(0,625):
+		for ligne_x in range(0,1200):
+			if ligne2[ligne_y][ligne_x] == "1":
+				co = [ligne_x, ligne_y]
+				tableau.append(co)
+			print("x= ", ligne_x,"y= ", ligne_y)
+	
+
+	print(tableau)
+
+	map.close()
+
+class waitForConnection(threading.Thread):
 	def __init__(self):
 		threading.Thread.__init__(self)
-		self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) 
-		UDP_IP = "192.168.1.38"
-		UDP_PORT = 12000
-		self.sock.bind((UDP_IP, UDP_PORT))
-		self.pos = [[1,0,0,40,30,60,0],[1,0,0,20,10,30,0],[1,0,0,50,100,190,0],[0,0,0,20,10,30,0],[1,0,0,400,300,200,1],[0,0,0,20,10,30,0],[0,0,0,20,10,30,0],[0,0,0,20,10,30,0]]
+
+	def run(self):
+		while True:
+			socketTCP.listen(15)
+			print("Wainting for connection")
+			(client, (ip, port)) = socketTCP.accept()
+			newClient = threadTcpConnection(ip, port, client)
+			newClient.start()
+
+
+
+
+
+
+class threadTcpConnection(threading.Thread):
+
+	def __init__(self, ip, port, client):
+		threading.Thread.__init__(self)
+		self.ip = ip
+		self.port = port
+		self.client = client
+		print("Tentative de connection entrante...")
+		
+	def run(self):
+		print("Client %s %s join the game." % (self.ip, self.port))
+		with lock:
+			if nbPlayer < nbMaxPlayer:
+				password = str(randint(1000, 9999))
+				nom, ip = self.client.recvfrom(1024)
+				#allIP.append(str(ip))
+				idClient = str(len(player))
+				self.client.send((password+idClient).encode('utf-8'))
+				connection(nom.decode('utf-8'), password)
+				self.client.close()
+
+
+
+
+class liveDataReceive(threading.Thread):
+	def __init__(self):
+		threading.Thread.__init__(self)	
+
+	def run(self):
+		while True:
+			data = (socketUDP.recv(1024))
+
+			with lock:
+				needToDO.append(pickle.loads(data))
+
+				#{9}{9999}{3.14}{4}{1}
+
+
+####Controler que les données ne soient pas trop différentes des précédentes
+
+
+class mainMover(threading.Thread):
+
+	def __init__(self):
+		threading.Thread.__init__(self)
+
+
 
 	def run(self):
 		while(1):
-			with lock:
-				self.sock.sendto(pickle.dumps(donnee), ("192.168.1.38", 33108))
+			action = []
+			with mainLock:
+				try:
+					action = needToDO[-1]
+					del needToDO[-1]
+				except:
+					pass
+				try:
+					ID = int(action[0])
+
+					if ID <= 9:
+						if player[ID].password == str(action[1]):
+							player[ID].changeAngle(math.radians(float(action[2])))
+							player[ID].move(int(action[3]))
+
+							if (player[ID].maxMissile > len(player[ID].shot)) and action[4] == 1:
+								player[ID].shot.append(missile(player[ID].position_x,player[ID].position_y, player[ID].angle))
+				except IndexError:
+					continue
+
+class mainWorker(threading.Thread):
+
+	def __init__(self):
+		threading.Thread.__init__(self)
+		self.data = ""
+
+	def run(self):
+		while(1):
+			positions = []
+			
+			####missiles#####
+			for k in range(2):
+				try:
+					positions.append([player[k].isAlive,player[k].tailleX, player[k].tailleY, round(player[k].position_x, 2), round(player[k].position_y,2) , round(player[k].angle,2) , player[k].chenille, k])
+				except IndexError:
+					positions.append([0,0,0,0,0,0,0,0])
+
+				for x in range(3):
+					try:
+						with workLocker:
+							player[k].shot[x].move()
+						positions.append([player[k].shot[x].state, player[k].shot[x].tailleX, player[k].shot[x].tailleY, round(player[k].shot[x].x,2) , round(player[k].shot[x].y,2), round(player[k].shot[x].angle,2) , k, x])
+					except IndexError:
+						positions.append([0,0,0,0,0,0,0,0])
+
+
+			####colisions######
+			#for t in range(len(positions)):
+			#	if positions[t][0]== 1 :
+			#		if (self.collision_mur(positions[t][3], positions[t][4], positions[t][1], positions[t][2])) == 0:
+			#			if t == 0 or t == 4:
+			#				player[positions[t][7]].kill()
+			#			else:
+			#				player[positions[t][6]].shot[positions[t][7]].destroy()
+			#				player[positions[t][6]].shot[positions[t][7]]
+#
+			#		for u in range(len(positions)):
+			#			if t == u:
+			#				continue
+			#			elif self.collision(positions[t][3], positions[t][4], positions[t][1], positions[t][2], positions[u][3], positions[u][4], positions[u][1], positions[u][2]) == 0:
+			#				if t == 0 or t == 4:
+			#					player[positions[t][7]].kill()
+			#				else:
+			#					player[positions[t][6]].shot[positions[t][7]].destroy()
+			#					del player[positions[t][6]].shot[positions[t][7]]
+
+			####envoie####
+
+			self.sender(positions)
+
 			time.sleep(.035)
-			data, addr = self.sock.recvfrom(2048)
-			self.pos = pickle.loads(data)
-			print("\n",self.pos)
+			#mettre seulement le Thread en pause <><><>
 
 
 
-pygame.init()
-fenetre = pygame.display.set_mode((1200,675))
 
-#Menu
-fond = pygame.image.load("MENUP.png").convert()
-fenetre.blit(fond, (0,0))
-pygame.display.flip()
+	def sender(self, serverData):
 
-continuer = 0
-while continuer==0:
-    for event in pygame.event.get():
-        if event.type == MOUSEBUTTONDOWN and event.button == 1 and event.pos[1] > 380 and event.pos[1]< 500 and event.pos[0] > 330 and event.pos[0] < 870:
-            continuer = 1
-        if event.type == MOUSEBUTTONDOWN and event.button == 1 and event.pos[1] > 550 and event.pos[0] > 1075:
-            continuer=2
+		data = pickle.dumps(serverData)
+		for k in allIP:
+			try:
+				socketUDP.sendto(data, (str(k), 12000))
+				socketUDP.sendto(data, (str(k), 13000))
+			except socket.gaierror:
+				print("Not found!")
 
+	def collision_mur(pos_x, pos_y, b_size_x, b_size_y):
+		pos = [[pos_x, pos_y], [pos_x+b_size_x, pos_y], [pos_x+b_size_x, pos_y+b_size_y], [pos_x, pos_y+b_size_y]]
+		for n in range(0, 3):
+			try:
+				tableau.index(pos[n])
+				print("Pos =", pos)
+				print("collision mur")
+				return 0
+				break	
+			except ValueError:
+				pass
+		return 1
 
-#Collage des objets
-
-#Chargement et collage du fond
-fond = pygame.image.load("MAP2.png").convert()
-fenetre.blit(fond, (0,0))
-
-#Chargement et collage du personnage
-perso1 = pygame.image.load("tank1.png").convert_alpha()
-perso1_1=perso1
-position_perso = perso1.get_rect()
-position_perso1_1 = perso1.get_rect()
-position_perso1_1 = position_perso.move(25,25)
-
-canon1 = pygame.image.load("canon1.png").convert_alpha()
-canon1_1=canon1
-position_canon1 = canon1.get_rect()
-position_canon1_1 = canon1.get_rect()
-position_canon1_1 = position_perso1_1
-
-#Chargement et collage du deuxieme personnage
-perso2 = pygame.image.load("tank2.png").convert_alpha()
-perso2_1=perso2
-position_perso2_1 = perso2.get_rect()
-position_perso2_1 = position_perso.move(1120,550)
-
-canon2 = pygame.image.load("canon2.png").convert_alpha()
-canon2_1=canon2
-position_canon2 = canon2.get_rect()
-position_canon2_1 = canon2.get_rect()
-position_canon2_1 = position_perso2_1
-
-#Chargement et collage des missiles des joueurs
-missile1_1 = pygame.image.load("Missile.png").convert_alpha()
-missile = missile1_1
-position_missile = missile1_1.get_rect()
-position_missile1_1 = missile1_1.get_rect()
-position_missile1_1 = position_missile.move(200,645)
-
-missile1_2 = pygame.image.load("Missile.png").convert_alpha()
-position_missile1_2 = missile1_2.get_rect()
-position_missile1_2 = position_missile.move(150,645)
-
-missile1_3 = pygame.image.load("Missile.png").convert_alpha()
-position_missile1_3 = missile1_3.get_rect()
-position_missile1_3 = position_missile.move(100,645)
-
-missile2_1 = pygame.image.load("Missile.png").convert_alpha()
-position_missile2_1 = missile2_1.get_rect()
-position_missile2_1=position_missile.move(400,645)
-
-missile2_2 = pygame.image.load("Missile.png").convert_alpha()
-position_missile2_2 = missile2_2.get_rect()
-position_missile2_2=position_missile.move(450,645)
-
-missile2_3 = pygame.image.load("Missile.png").convert_alpha()
-position_missile2_3 = missile2_3.get_rect()
-position_missile2_3=position_missile.move(500,645)
-
-raffraichissement()
-
-#BOUCLE INFINIE
-pygame.key.set_repeat(400, 7)
-
-connect("Michelle")
-monSocket = udpSocket()
-monSocket.start()
-
-while continuer==1:
-        #Attente des événements
-        tableau = monSocket.pos
-        for event in pygame.event.get():
-            
-            #[[1,40,30,60,0],[1,20,10,30,0],[1,50,100,190,0],[0,20,10,30,0],[1,400,300,200,1],[0,20,10,30,0],[0,20,10,30,0],[0,20,10,30,0]]
-            #liste[]=[Etat,X,Y,Angle,Chenille]
-            #Tank1
-            try:
-                liste=tableau[0]
-            except:
-                pass
-
-            #print(liste)
-
-            x1=liste[3]
-            y1=liste[4]
-            position_perso1_1=position_perso.move(x1,y1)
-            canon1_1 = pygame.transform.rotate(canon1,-math.degrees(liste[5]))
-            position_canon1_1 = position_perso1_1.move(-((canon1_1.get_height()-56)/2),-((canon1_1.get_height()-56)/2))
-            if liste[6]==1:
-                perso1 = pygame.transform.rotate(perso1_1, 90)
-                
-
-            #Tank2
-            liste=tableau[4]
-            x2=liste[3]
-            y2=liste[4]
-            position_perso2_1=position_perso.move(x2,y2)
-            canon2_1 = pygame.transform.rotate(canon2,-math.degrees(liste[5]))
-            position_canon2_1 = position_perso2_1.move(-((canon2_1.get_height()-56)/2),-((canon2_1.get_height()-56)/2))
-            if liste[6]==1:
-                perso2 = pygame.transform.rotate(perso2_1, 90)
-                
-            #Missile1_1
-            liste=tableau[1]
-            if liste[0]==0:
-                position_missile1_1=position_missile.move(100,645)
-            else:
-                position_missile1_1=position_missile.move(liste[3],liste[4])
-                missile1_1 = pygame.transform.rotate(missile,-math.degrees(liste[5]))
-
-            #Missile1_2
-            liste=tableau[2]
-            if liste[0]==0:
-                position_missile1_2=position_missile.move(150,645)
-            else:
-                position_missile1_2=position_missile.move(liste[3],liste[4])
-                missile1_2 = pygame.transform.rotate(missile,-math.degrees(liste[5]))
+	def collision(pos_x1,pos_y1,b_size_x, b_size_y, pos_x2, pos_y2, b_size_x2, b_size_y2):
+		if pos_x1 <= pos_x2 and pos_x1 + b_size_x >= pos_x2:
+			if pos_y1 <= pos_y2 and pos_y1 + b_size_y >= pos_y2:
+				print("conti")
+				return 0
+		elif pos_x2 <= pos_x1 and pos_x2 + b_size_x2 >= pos_x1:
+			if pos_y2 <= pos_y1 and pos_y2 + b_size_y2 >= pos_y1:
+				print("conti2")
+				return 0
+		return 1
 
 
-            #Missile1_3
-            liste=tableau[3]
-            if liste[0]==0:
-                position_missile1_3=position_missile.move(200,645)
-            else:
-                position_missile1_3=position_missile.move(liste[3],liste[4])
-                missile1_3 = pygame.transform.rotate(missile,-math.degrees(liste[5]))
 
 
-            #Missile2_1
-            liste=tableau[5]
-            if liste[0]==0:
-                position_missile2_1=position_missile.move(400,645)
-            else:
-                position_missile2_1=position_missile.move(liste[3],liste[4])
-                missile2_1 = pygame.transform.rotate(missile,-math.degrees(liste[5]))
+		
 
 
-            #Missile2_2
-            liste=tableau[6]
-            if liste[0]==0:
-                position_missile2_2=position_missile.move(450,645)
-            else:
-                position_missile2_2=position_missile.move(liste[3],liste[4])
-                missile2_2 = pygame.transform.rotate(missile,-math.degrees(liste[5]))
+
+class user():
+
+	def __init__(self, name, password):
+		self.name = name
+		self.password = password
+		self.position_x = 0
+		self.position_y = 0
+		self.angle = 0             #Angle en radian
+		self.isAlive = 1	   	   #Est-ce que je joueur est en vie
+		self.stepRange = 8		   #On se déplace de x px en x px ---> vitesse  
+		self.chenille = 0			#Si la valeur est 0, les chenilles sont verticales, sinon elles sont horizontales
+		self.tailleX = 56
+		self.tailleY=56			
+		self.shot = []
+		self.maxMissile = 3        #nombre maximal de missile de user sur la map
+
+	def move(self, XY):            #XY vaut 1, 2 , 3 , 4 ->avancer d'une case, droite, reculer, aller a gauche
+		
+		if XY == 0:
+			pass
+		elif XY == 1:
+			self.position_y += self.stepRange
+			self.chenille = 0
+		elif XY == 2:
+			self.position_x += self.stepRange
+			self.chenille = 1
+		elif XY == 3:
+			self.position_y -= self.stepRange
+			self.chenille = 0
+		elif XY == 4:
+			self.position_x -= self.stepRange
+			self.chenille = 1
 
 
-            #Missile2_3
-            liste=tableau[7]
-            if liste[0]==0:
-                position_missile2_3=position_missile.move(500,645)
-            else:
-                position_missile2_3=position_missile.move(liste[3],liste[4])
-                missile2_3 = pygame.transform.rotate(missile,-math.degrees(liste[5]))
 
-            #Evenements
-            if event.type == MOUSEBUTTONDOWN and event.button == 1:
-                tir1=1
-            
-            if event.type == MOUSEMOTION:
-                canon1_x=event.pos[0]-x1-(canon1_1.get_height()/2)
-                canon1_y=event.pos[1]-y1-(canon1_1.get_height()/2)
-                if (canon1_x)!=0:
-                        angle1 = math.degrees(math.atan((canon1_y)/(canon1_x)))
-                if canon1_x<0:
-                        angle1 = angle1+180
+	def changeAngle(self,an):
 
-            if event.type == KEYDOWN:
-                if event.key == K_DOWN:
-                    deplacement1=1
-                if event.key == K_RIGHT:
-                    deplacement1=2
-                if event.key == K_UP:
-                    deplacement1=3
-                if event.key == K_LEFT:
-                    deplacement1=4
-                if event.key == K_ESCAPE:
-                    continuer=2
+		self.angle = an
 
-            
-            with lock:
-            	donnee=[ID, password, round(angle1,2),deplacement1,tir1,continuer]
-            tir1=0
-            deplacement1=0
-            raffraichissement()
+	def kill(self, end):
+		self.isAlive = 0
+		#compteurdepoints()
+
+		if end == False:
+
+			
+			self.position_x = 0
+			self.position_y = 0
+			self.isAlive = 1
+
+		else:
+			pass
+
+		def tir(self):
+
+			if len(self.shot) < self.maxMissile:
+				self.shot.append(missile(self.position_x+28, self.position_y+28, self.angle))
+			else:
+				pass
 
 
-pygame.quit()
+
+
+
+class missile():
+
+	def __init__(self,a, b, angle):
+
+		self.a = a
+		self.b = b
+
+		self.state = 1
+		self.tailleX = -16
+		self.tailleY = -6
+
+		self.stepRange = 1
+		self.t = 0
+		self.angle = angle
+		self.x = a
+		self.y = b
+
+	def move(self):
+		#accélération:
+		self.x = (1/2)*self.stepRange*math.cos(self.angle)*self.t*self.t+self.a
+		self.y = (1/2)*self.stepRange*math.sin(self.angle)*self.t*self.t+self.b
+
+		#sans accélération
+		#self.x = (1/2)*self.stepRange*math.cos(self.angle)*self.t+self.a
+		#self.y = (1/2)*self.stepRange*math.sin(self.angle)*self.t+self.b
+	
+		#déccelération
+		#x=(500-2*t)*cos(2)*t+4000
+		#y=(500-2*t)*sin(2)*t+6250
+
+		self.t += 1
+		if self.t > 50:
+			self.destroy()
+
+	def destroy(self):
+		self.state = 0
+
+
+
+
+def connection(name, password):
+	player.append(user(name, password))
+
+
+
+#try:
+#	initMap()
+#except:
+#	pass
+
+
+
+wait = waitForConnection()
+Receive = liveDataReceive()
+main1 = mainMover()
+main2 = mainWorker()
+
+main2.start()
+
+main1.start()
+wait.start()
+Receive.start()
+
+while(1):
+	with lock:
+		if len(needToDO) > 50:
+			needToDO = []
+	time.sleep(0.50)
