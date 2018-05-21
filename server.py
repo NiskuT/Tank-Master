@@ -18,7 +18,7 @@ needToDO =[]
 allIP =["192.168.1.38"]
 b_size_missile_x = -16
 b_size_missile_y = -6
-
+tableau = []
 
 
 socketTCP = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -65,7 +65,7 @@ class waitForConnection(threading.Thread):
 	def run(self):
 		while True:
 			socketTCP.listen(15)
-			print("Wainting for connection")
+			print("Waiting for connection")
 			(client, (ip, port)) = socketTCP.accept()
 			newClient = threadTcpConnection(ip, port, client)
 			newClient.start()
@@ -174,13 +174,14 @@ class mainWorker(threading.Thread):
 			####colisions######
 			#for t in range(len(positions)):
 			#	if positions[t][0]== 1 :
-			#		if (self.collision_mur(positions[t][3], positions[t][4], positions[t][1], positions[t][2])) == 0:
+			#		print(positions[t][3], "  ", positions[t][4],"  ", positions[t][1], "  ",positions[t][2])
+			#		if (self.collision_mur(positions[t][3], positions[t][4], positions[t][1],positions[t][2])) == 0:
 			#			if t == 0 or t == 4:
 			#				player[positions[t][7]].kill()
 			#			else:
 			#				player[positions[t][6]].shot[positions[t][7]].destroy()
 			#				player[positions[t][6]].shot[positions[t][7]]
-#
+
 			#		for u in range(len(positions)):
 			#			if t == u:
 			#				continue
@@ -195,7 +196,7 @@ class mainWorker(threading.Thread):
 
 			self.sender(positions)
 
-			time.sleep(.035)
+			time.sleep(.040)
 			#mettre seulement le Thread en pause <><><>
 
 
@@ -211,27 +212,28 @@ class mainWorker(threading.Thread):
 			except socket.gaierror:
 				print("Not found!")
 
-	def collision_mur(pos_x, pos_y, b_size_x, b_size_y):
+	def collision_mur(self, pos_x, pos_y, b_size_x, b_size_y):
+		print(pos_x, " ", pos_y, " ", b_size_x, " ", b_size_y)
+
 		pos = [[pos_x, pos_y], [pos_x+b_size_x, pos_y], [pos_x+b_size_x, pos_y+b_size_y], [pos_x, pos_y+b_size_y]]
 		for n in range(0, 3):
 			try:
 				tableau.index(pos[n])
-				print("Pos =", pos)
-				print("collision mur")
+
 				return 0
 				break	
 			except ValueError:
 				pass
 		return 1
 
-	def collision(pos_x1,pos_y1,b_size_x, b_size_y, pos_x2, pos_y2, b_size_x2, b_size_y2):
+	def collision(self, pos_x1,pos_y1,b_size_x, b_size_y, pos_x2, pos_y2, b_size_x2, b_size_y2):
 		if pos_x1 <= pos_x2 and pos_x1 + b_size_x >= pos_x2:
 			if pos_y1 <= pos_y2 and pos_y1 + b_size_y >= pos_y2:
-				print("conti")
+
 				return 0
 		elif pos_x2 <= pos_x1 and pos_x2 + b_size_x2 >= pos_x1:
 			if pos_y2 <= pos_y1 and pos_y2 + b_size_y2 >= pos_y1:
-				print("conti2")
+
 				return 0
 		return 1
 
@@ -275,6 +277,12 @@ class user():
 			self.position_x -= self.stepRange
 			self.chenille = 1
 
+		try:
+			if len(self.shot) == 3 and self.shot[2].t > 50 :
+				self.shot = []
+		except:
+			pass
+
 
 
 	def changeAngle(self,an):
@@ -298,7 +306,7 @@ class user():
 		def tir(self):
 
 			if len(self.shot) < self.maxMissile:
-				self.shot.append(missile(self.position_x+28, self.position_y+28, self.angle))
+				self.shot.append(missile((self.position_x+28), (self.position_y+28), self.angle))
 			else:
 				pass
 
@@ -318,7 +326,7 @@ class missile():
 		self.tailleY = -6
 
 		self.stepRange = 1
-		self.t = 0
+		self.t = 1
 		self.angle = angle
 		self.x = a
 		self.y = b
