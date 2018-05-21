@@ -87,9 +87,6 @@ while continuer==0:
         if event.type == MOUSEBUTTONDOWN and event.button == 1 and event.pos[1] > 550 and event.pos[0] > 1075:
             continuer=2
 
-#ID JOUEUR
-ID="2525"
-
 #Collage des objets
 
 #Chargement et collage du fond
