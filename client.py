@@ -13,11 +13,15 @@ import time
 tir1=0
 angle1=0
 deplacement1=0
-mdp = 0
-ID = 0
 lock = RLock()
-pos = [[1,40,30,60,0],[1,20,10,30,0],[1,50,100,190,0],[0,20,10,30,0],[1,400,300,200,1],[0,20,10,30,0],[0,20,10,30,0],[0,20,10,30,0]]
-donnee = 0
+pos = [[1,0,0,40,30,60,0],[1,0,0,20,10,30,0],[1,0,0,50,100,190,0],[0,0,0,20,10,30,0],[1,0,0,400,300,200,1],[0,0,0,20,10,30,0],[0,0,0,20,10,30,0],[0,0,0,20,10,30,0]]
+donnee = []
+
+def Laliste():
+	return pos
+
+def setPos(lst):
+	pos = lst
 
 def raffraichissement():
     fenetre.blit(fond, (0,0))
@@ -46,30 +50,32 @@ def connect(name):
 	print("received data:", data)
 
 
-	mdp = int(data[0]+data[1]+data[2]+data[3])
-	ID = int(data[4])
+	mdp = data[0]+data[1]+data[2]+data[3]
+	IDjoueur = data[4]
+
+	global password
+	global ID
+	password = int(mdp)
+	ID = int(IDjoueur)
 
 class udpSocket(threading.Thread):
 	def __init__(self):
 		threading.Thread.__init__(self)
-
 		self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) 
-		UDP_IP = "192.168.0.38"
+		UDP_IP = "192.168.1.38"
 		UDP_PORT = 12000
-		#self.sock.bind((UDP_IP, UDP_PORT))
+		self.sock.bind((UDP_IP, UDP_PORT))
 
 	def run(self):
 		while(1):
-			data, addr = self.sock.recvfrom(2048)
-			print("test")
 			with lock:
-				pos = pickle.loads(data)
-			self.sock.sendto(donnee, (str(addr), 12001))
-			print(donnee)
-			print("hello")
+				self.sock.sendto(pickle.dumps(donnee), ("192.168.1.38", 33108))
 			time.sleep(.020)
+			data, addr = self.sock.recvfrom(2048)
+			setPos(pickle.loads(data))
+			print("\n",pos)
 
-			
+
 
 pygame.init()
 fenetre = pygame.display.set_mode((1200,675))
@@ -157,9 +163,9 @@ monSocket.start()
 
 while continuer==1:
         #Attente des événements
+        tableau = Laliste()
         for event in pygame.event.get():
-            with lock:
-                tableau = pos
+            
             #[[1,40,30,60,0],[1,20,10,30,0],[1,50,100,190,0],[0,20,10,30,0],[1,400,300,200,1],[0,20,10,30,0],[0,20,10,30,0],[0,20,10,30,0]]
             #liste[]=[Etat,X,Y,Angle,Chenille]
             #Tank1
@@ -168,23 +174,25 @@ while continuer==1:
             except:
                 pass
 
-            x1=liste[1]
-            y1=liste[2]
+            #print(liste)
+
+            x1=liste[3]
+            y1=liste[4]
             position_perso1_1=position_perso.move(x1,y1)
-            canon1_1 = pygame.transform.rotate(canon1,-liste[3])
+            canon1_1 = pygame.transform.rotate(canon1,-math.degrees(liste[5]))
             position_canon1_1 = position_perso1_1.move(-((canon1_1.get_height()-56)/2),-((canon1_1.get_height()-56)/2))
-            if liste[4]==1:
+            if liste[6]==1:
                 perso1 = pygame.transform.rotate(perso1_1, 90)
                 
 
             #Tank2
             liste=tableau[4]
-            x2=liste[1]
-            y2=liste[2]
+            x2=liste[3]
+            y2=liste[4]
             position_perso2_1=position_perso.move(x2,y2)
-            canon2_1 = pygame.transform.rotate(canon2,-liste[3])
+            canon2_1 = pygame.transform.rotate(canon2,-math.degrees(liste[5]))
             position_canon2_1 = position_perso2_1.move(-((canon2_1.get_height()-56)/2),-((canon2_1.get_height()-56)/2))
-            if liste[4]==1:
+            if liste[6]==1:
                 perso2 = pygame.transform.rotate(perso2_1, 90)
                 
             #Missile1_1
@@ -192,16 +200,16 @@ while continuer==1:
             if liste[0]==0:
                 position_missile1_1=position_missile.move(100,645)
             else:
-                position_missile1_1=position_missile.move(liste[1],liste[2])
-                missile1_1 = pygame.transform.rotate(missile,-liste[3])
+                position_missile1_1=position_missile.move(liste[3],liste[4])
+                missile1_1 = pygame.transform.rotate(missile,-math.degrees(liste[5]))
 
             #Missile1_2
             liste=tableau[2]
             if liste[0]==0:
                 position_missile1_2=position_missile.move(150,645)
             else:
-                position_missile1_2=position_missile.move(liste[1],liste[2])
-                missile1_2 = pygame.transform.rotate(missile,-liste[3])
+                position_missile1_2=position_missile.move(liste[3],liste[4])
+                missile1_2 = pygame.transform.rotate(missile,-math.degrees(liste[5]))
 
 
             #Missile1_3
@@ -209,8 +217,8 @@ while continuer==1:
             if liste[0]==0:
                 position_missile1_3=position_missile.move(200,645)
             else:
-                position_missile1_3=position_missile.move(liste[1],liste[2])
-                missile1_3 = pygame.transform.rotate(missile,-liste[3])
+                position_missile1_3=position_missile.move(liste[3],liste[4])
+                missile1_3 = pygame.transform.rotate(missile,-math.degrees(liste[5]))
 
 
             #Missile2_1
@@ -218,8 +226,8 @@ while continuer==1:
             if liste[0]==0:
                 position_missile2_1=position_missile.move(400,645)
             else:
-                position_missile2_1=position_missile.move(liste[1],liste[2])
-                missile2_1 = pygame.transform.rotate(missile,-liste[3])
+                position_missile2_1=position_missile.move(liste[3],liste[4])
+                missile2_1 = pygame.transform.rotate(missile,-math.degrees(liste[5]))
 
 
             #Missile2_2
@@ -227,8 +235,8 @@ while continuer==1:
             if liste[0]==0:
                 position_missile2_2=position_missile.move(450,645)
             else:
-                position_missile2_2=position_missile.move(liste[1],liste[2])
-                missile2_2 = pygame.transform.rotate(missile,-liste[3])
+                position_missile2_2=position_missile.move(liste[3],liste[4])
+                missile2_2 = pygame.transform.rotate(missile,-math.degrees(liste[5]))
 
 
             #Missile2_3
@@ -236,8 +244,8 @@ while continuer==1:
             if liste[0]==0:
                 position_missile2_3=position_missile.move(500,645)
             else:
-                position_missile2_3=position_missile.move(liste[1],liste[2])
-                missile2_3 = pygame.transform.rotate(missile,-liste[3])
+                position_missile2_3=position_missile.move(liste[3],liste[4])
+                missile2_3 = pygame.transform.rotate(missile,-math.degrees(liste[5]))
 
             #Evenements
             if event.type == MOUSEBUTTONDOWN and event.button == 1:
@@ -263,11 +271,9 @@ while continuer==1:
                 if event.key == K_ESCAPE:
                     continuer=2
 
-            liste2=[ID, mdp, round(angle1,2),deplacement1,tir1,continuer]
+            
             with lock:
-            	donnee = pickle.dumps(liste2)
-            	print(donnee)
-
+            	donnee=[ID, password, round(angle1,2),deplacement1,tir1,continuer]
             tir1=0
             deplacement1=0
             raffraichissement()
