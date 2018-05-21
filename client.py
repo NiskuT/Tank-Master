@@ -16,9 +16,8 @@ deplacement1=0
 lock = RLock()
 donnee = []
 
-
-        def setPos(lst):
-        pos = lst
+def setPos(lst):
+    pos = lst
 
 def raffraichissement():
     fenetre.blit(fond, (0,0))
