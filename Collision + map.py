@@ -31,7 +31,7 @@ def hitbox_missile(self, angle):
 #l'angle est en radian
 #les positions sont en entiers
 
-def collision_mur(self, pos_x, pos_y):
+def collision_mur(self, pos_x, pos_y, b_size_x, b_size_y):
 	
 	pos = [[math.ceil(pos_x), math.ceil(pos_y)], [math.ceil(pos_x+b_size_x), math.ceil(pos_y)], [math.ceil(pos_x+b_size_x), math.ceil(pos_y+b_size_y)], [math.ceil(pos_x), math.ceil(pos_y+b_size_y)]]
 	for n in range(0, 3):
@@ -46,21 +46,17 @@ def collision_mur(self, pos_x, pos_y):
 
 #collision entre les entitées
 
-def collision(pos_x1,pos_y1,b_size_x, b_size_y, pos_x2, pos_y2, b_size_x2, b_size_y2):
+def collision(pos_x1,pos_y1,b_size_x, b_size_y, pos_x2, pos_y2, b_size_x2, b_size_y2, angle):
 
 
 
 
 	if pos_x1 <= pos_x2 and pos_x1 + b_size_x >= pos_x2:
 		if pos_y1 <= pos_y2 and pos_y1 + b_size_y >= pos_y2:
-			conti = 0
-			print("conti")
-			return conti
+			return 0
 	elif pos_x2 <= pos_x1 and pos_x2 + b_size_x2 >= pos_x1:
 		if pos_y2 <= pos_y1 and pos_y2 + b_size_y2 >= pos_y1:
-			conti = 0
-			print("conti2")
-			return conti
+			return 0
 	return 1
 
 
