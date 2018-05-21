@@ -44,8 +44,8 @@ angle = 36
 
 #Donnée que j'ai grâce à quentin
 angle_rad = math.radians(angle)
-b_size_missile_x = -16
-b_size_missile_y = -6
+b_size_missile_x = 16
+b_size_missile_y = 6
 entite1 = perso
 #	Sa postion en x et y et l'angle 
 
@@ -74,8 +74,8 @@ def collision_mur(entite1, pos_x, pos_y, b_size_x, b_size_y):
 			return 0
 			break	
 		except ValueError:
-			pass
-	return 1
+			print("iln'y a pas de mur")
+			return 1
 
 def collision(entite1, pos_x1,pos_y1,b_size_x, b_size_y, entité2, pos_x2, pos_y2, b_size_x2, b_size_y2):
 	if pos_x1 <= pos_x2 and pos_x1 + b_size_x >= pos_x2:
@@ -93,20 +93,22 @@ def collision(entite1, pos_x1,pos_y1,b_size_x, b_size_y, entité2, pos_x2, pos_y
 pygame.display.flip()
 conti = 1
 while conti == 1:
-	perso_x = perso_x + vecteur[0]*5
-	perso_y = perso_y + vecteur[1]*5
-	mur_x = mur_x + 0
-	mur_y = mur_y + 0
+	perso_x = math.ceil(perso_x + vecteur[0]*5)
+	perso_y = math.ceil(perso_y + vecteur[1]*5)
+	mur_x = math.ceil(mur_x + 0)
+	mur_y = math.ceil(mur_y + 0)
+	
+	
 	print("x= ", perso_x, "y = ", perso_y)
 	print("x= ", mur_x, "y = ", mur_y)
 	print(vecteur[0], vecteur[1])
 
-	b_size_x= b_size_missile_x * math.cos(angle_rad)
-	b_size_y = b_size_missile_y * math.sin(angle_rad)
+	b_size_x= math.ceil(b_size_missile_x * math.cos(angle_rad))
+	b_size_y = math.ceil(b_size_missile_y * math.sin(angle_rad))
 	print("hitbox x = ", b_size_x, " y = ", b_size_y)
 
 
-	conti = collision(perso, math.ceil(perso_x), math.ceil(perso_y), b_size_x, b_size_y, tank1, mur_x, mur_y, 0, 0)
+	conti = collision(perso, perso_x, perso_y, b_size_x, b_size_y, tank1, mur_x, mur_y, 0, 0)
 	conti = collision_mur(tank1, mur_x, mur_y, 56, 56)
 	conti = collision_mur(perso, perso_x, perso_y, b_size_x, b_size_y)
 	
