@@ -17,8 +17,8 @@ lock = RLock()
 donnee = []
 
 
-def setPos(lst):
-	pos = lst
+        def setPos(lst):
+        pos = lst
 
 def raffraichissement():
     fenetre.blit(fond, (0,0))
@@ -35,43 +35,43 @@ def raffraichissement():
     pygame.display.flip()
 
 def connect(name):
-	TCP_IP = "192.168.1.38"
-	TCP_PORT = 7089
+        TCP_IP = "192.168.1.38"
+        TCP_PORT = 7089
 
-	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-	s.connect((TCP_IP, TCP_PORT))
-	s.send(name.encode('utf-8'))
-	data = (s.recv(1024)).decode('utf-8')
-	s.close()
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.connect((TCP_IP, TCP_PORT))
+        s.send(name.encode('utf-8'))
+        data = (s.recv(1024)).decode('utf-8')
+        s.close()
 
-	print("received data:", data)
+        print("received data:", data)
 
 
-	mdp = data[0]+data[1]+data[2]+data[3]
-	IDjoueur = data[4]
+        mdp = data[0]+data[1]+data[2]+data[3]
+        IDjoueur = data[4]
 
-	global password
-	global ID
-	password = int(mdp)
-	ID = int(IDjoueur)
+        global password
+        global ID
+        password = int(mdp)
+        ID = int(IDjoueur)
 
 class udpSocket(threading.Thread):
-	def __init__(self):
-		threading.Thread.__init__(self)
-		self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) 
-		UDP_IP = "192.168.1.38"
-		UDP_PORT = 12000
-		self.sock.bind((UDP_IP, UDP_PORT))
-		self.pos = [[1,0,0,40,30,60,0],[1,0,0,20,10,30,0],[1,0,0,50,100,190,0],[0,0,0,20,10,30,0],[1,0,0,400,300,200,1],[0,0,0,20,10,30,0],[0,0,0,20,10,30,0],[0,0,0,20,10,30,0]]
+        def __init__(self):
+                threading.Thread.__init__(self)
+                self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) 
+                UDP_IP = "192.168.1.38"
+                UDP_PORT = 12000
+                self.sock.bind((UDP_IP, UDP_PORT))
+                self.pos = [[1,0,0,40,30,60,0],[1,0,0,20,10,30,0],[1,0,0,50,100,190,0],[0,0,0,20,10,30,0],[1,0,0,400,300,200,1],[0,0,0,20,10,30,0],[0,0,0,20,10,30,0],[0,0,0,20,10,30,0]]
 
-	def run(self):
-		while(1):
-			with lock:
-				self.sock.sendto(pickle.dumps(donnee), ("192.168.1.38", 33108))
-			time.sleep(.035)
-			data, addr = self.sock.recvfrom(2048)
-			self.pos = pickle.loads(data)
-			print("\n",self.pos)
+        def run(self):
+                while(1):
+                        with lock:
+                                self.sock.sendto(pickle.dumps(donnee), ("192.168.1.38", 33108))
+                        time.sleep(.035)
+                        data, addr = self.sock.recvfrom(2048)
+                        self.pos = pickle.loads(data)
+                        print("\n",self.pos)
 
 
 
@@ -92,11 +92,11 @@ continuer = 0
 while continuer==0:
     for event in pygame.event.get():
         if event.type == MOUSEBUTTONDOWN and event.button == 1 and event.pos[1] > 380 and event.pos[1]< 500 and event.pos[0] > 330 and event.pos[0] < 870:
-		bip.play()
-		continuer = 1
+                bip.play()
+                continuer = 1
         if event.type == MOUSEBUTTONDOWN and event.button == 1 and event.pos[1] > 550 and event.pos[0] > 1075:
-		continuer=2
-		bip.play()
+                continuer=2
+                bip.play()
 
 
 #Collage des objets
@@ -175,14 +175,14 @@ while continuer==1:
             #liste[]=[Etat,X,Y,Angle,Chenille]
             #Tank1
 
-	    try:
+            try:
                 liste=tableau[0]
             except:
                 pass
 
             #print(liste)
-	    if liste[0]==2:
-		boom.play()
+            if liste[0]==2:
+                boom.play()
             x1=liste[3]
             y1=liste[4]
             position_perso1_1=position_perso.move(x1,y1)
@@ -193,8 +193,8 @@ while continuer==1:
                 
 
             #Tank2
-	    if liste[0]==2:
-		boom.play()
+            if liste[0]==2:
+                boom.play()
             liste=tableau[4]
             x2=liste[3]
             y2=liste[4]
@@ -281,10 +281,10 @@ while continuer==1:
                     continuer=2
 
             if tir1==1:
-		tir.play()
-		
+                tir.play()
+                
             with lock:
-            	donnee=[ID, password, round(angle1,2),deplacement1,tir1,continuer]
+                donnee=[ID, password, round(angle1,2),deplacement1,tir1,continuer]
             tir1=0
             deplacement1=0
             raffraichissement()
