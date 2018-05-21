@@ -1,11 +1,23 @@
+# coding: utf-8
+#!/usr/bin/env python
 import pygame
 from pygame.locals import *
 import math
+import socket
+from threading import Thread, RLock
+import threading
+import pickle
+import time
 
 #Variables
 tir1=0
 angle1=0
 deplacement1=0
+mdp = 0
+ID = 0
+lock = RLock()
+pos = []
+donnee = ""
 
 def raffraichissement():
     fenetre.blit(fond, (0,0))
@@ -20,6 +32,43 @@ def raffraichissement():
     fenetre.blit(missile2_2, position_missile2_2)
     fenetre.blit(missile2_3, position_missile2_3)
     pygame.display.flip()
+
+def connect(name):
+	TCP_IP = "192.168.1.38"
+	TCP_PORT = 7089
+
+	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+	s.connect((TCP_IP, TCP_PORT))
+	s.send(name.encode('utf-8'))
+	data = (s.recv(1024)).decode('utf-8')
+	s.close()
+
+	print("received data:", data)
+
+
+	mdp = int(data[0]+data[1]+data[2]+data[3])
+	ID = int(data[4])
+
+class udpSocket(threading.Thread):
+	def __init__(self):
+		threading.Thread.__init__(self)
+
+		sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) 
+		UDP_IP = "192.168.1.38"
+		UDP_PORT = 12000
+		sock.bind((UDP_IP, UDP_PORT))
+
+	def run(self):
+		while(1):
+			data, addr = sock.recvfrom(2048)
+			with lock:
+				pos = pickle.loads(data)
+			sock.sendto(donnee.encode('utf-8'), addr)
+			time.sleep(.020)
+
+
+
+
 
 
 pygame.init()
@@ -103,6 +152,11 @@ raffraichissement()
 
 #BOUCLE INFINIE
 pygame.key.set_repeat(400, 7)
+
+connect("Michelle")
+monSocket = udpSocket()
+monSocket.start()
+
 while continuer==1:
 
         #Attente des événements
