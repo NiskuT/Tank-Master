@@ -16,8 +16,8 @@ deplacement1=0
 mdp = 0
 ID = 0
 lock = RLock()
-pos = []
-donnee = ""
+pos = [[1,40,30,60,0],[1,20,10,30,0],[1,50,100,190,0],[0,20,10,30,0],[1,400,300,200,1],[0,20,10,30,0],[0,20,10,30,0],[0,20,10,30,0]]
+donnee = 0
 
 def raffraichissement():
     fenetre.blit(fond, (0,0))
@@ -53,23 +53,23 @@ class udpSocket(threading.Thread):
 	def __init__(self):
 		threading.Thread.__init__(self)
 
-		sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) 
-		UDP_IP = "192.168.1.38"
+		self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) 
+		UDP_IP = "192.168.0.38"
 		UDP_PORT = 12000
-		sock.bind((UDP_IP, UDP_PORT))
+		#self.sock.bind((UDP_IP, UDP_PORT))
 
 	def run(self):
 		while(1):
-			data, addr = sock.recvfrom(2048)
+			data, addr = self.sock.recvfrom(2048)
+			print("test")
 			with lock:
 				pos = pickle.loads(data)
-			sock.sendto(donnee.encode('utf-8'), addr)
+			self.sock.sendto(donnee, (str(addr), 12001))
+			print(donnee)
+			print("hello")
 			time.sleep(.020)
 
-
-
-
-
+			
 
 pygame.init()
 fenetre = pygame.display.set_mode((1200,675))
@@ -86,6 +86,7 @@ while continuer==0:
             continuer = 1
         if event.type == MOUSEBUTTONDOWN and event.button == 1 and event.pos[1] > 550 and event.pos[0] > 1075:
             continuer=2
+
 
 #Collage des objets
 
@@ -155,14 +156,18 @@ monSocket = udpSocket()
 monSocket.start()
 
 while continuer==1:
-
         #Attente des événements
         for event in pygame.event.get():
-            tableau =[[1,40,30,60,0],[1,20,10,30,0],[1,50,100,190,0],[0,20,10,30,0],[1,400,300,200,1],[0,20,10,30,0],[0,20,10,30,0],[0,20,10,30,0]]
+            with lock:
+                tableau = pos
+            #[[1,40,30,60,0],[1,20,10,30,0],[1,50,100,190,0],[0,20,10,30,0],[1,400,300,200,1],[0,20,10,30,0],[0,20,10,30,0],[0,20,10,30,0]]
             #liste[]=[Etat,X,Y,Angle,Chenille]
-
             #Tank1
-            liste=tableau[0]
+            try:
+                liste=tableau[0]
+            except:
+                pass
+
             x1=liste[1]
             y1=liste[2]
             position_perso1_1=position_perso.move(x1,y1)
@@ -258,10 +263,13 @@ while continuer==1:
                 if event.key == K_ESCAPE:
                     continuer=2
 
-            liste2=[round(angle1,2),deplacement1,tir1,continuer]
+            liste2=[ID, mdp, round(angle1,2),deplacement1,tir1,continuer]
+            with lock:
+            	donnee = pickle.dumps(liste2)
+            	print(donnee)
+
             tir1=0
             deplacement1=0
-            print(liste2)
             raffraichissement()
 
 
