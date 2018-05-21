@@ -29,17 +29,6 @@ socketUDP = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 socketUDP.bind(("192.168.1.38", 33108))
 
 
-
-#def collision(XA,YA, a, ID, xb, yb, ab, idb):
-
-#def check():
-#	collision joueur joueur
-#	collision joueur map
-#	collision joueur missile
-#	collision missile map
-#	collision missile missile
-
-
 def initMap():
 	map = open("Map2_2.txt", "r")
 	coordonnes = map.read()
@@ -172,25 +161,24 @@ class mainWorker(threading.Thread):
 
 
 			####colisions######
-			#for t in range(len(positions)):
-			#	if positions[t][0]== 1 :
-			#		print(positions[t][3], "  ", positions[t][4],"  ", positions[t][1], "  ",positions[t][2])
-			#		if (self.collision_mur(positions[t][3], positions[t][4], positions[t][1],positions[t][2])) == 0:
-			#			if t == 0 or t == 4:
-			#				player[positions[t][7]].kill()
-			#			else:
-			#				player[positions[t][6]].shot[positions[t][7]].destroy()
-			#				player[positions[t][6]].shot[positions[t][7]]
+			for t in range(len(positions)):
+				if positions[t][0]== 1 :
+					if (self.collision_mur(t, positions[t][3], positions[t][4], positions[t][1],positions[t][2] , positions[t][5])) == 0:
+						if t == 0 or t == 4:
+							player[positions[t][7]].kill(False)
+						else:
+							player[positions[t][6]].shot[positions[t][7]].destroy()
+							player[positions[t][6]].shot[positions[t][7]]
 
-			#		for u in range(len(positions)):
-			#			if t == u:
-			#				continue
-			#			elif self.collision(positions[t][3], positions[t][4], positions[t][1], positions[t][2], positions[u][3], positions[u][4], positions[u][1], positions[u][2]) == 0:
-			#				if t == 0 or t == 4:
-			#					player[positions[t][7]].kill()
-			#				else:
-			#					player[positions[t][6]].shot[positions[t][7]].destroy()
-			#					del player[positions[t][6]].shot[positions[t][7]]
+					for u in range(len(positions)):
+						if t == u:
+							continue
+						elif self.collision(t, positions[t][3], positions[t][4], positions[t][1], positions[t][2], u,  positions[u][3], positions[u][4], positions[u][1], positions[u][2], positions[t][5]) == 0:
+							if t == 0 or t == 4:
+								player[positions[t][7]].kill(False)
+							else:
+								player[positions[t][6]].shot[positions[t][7]].destroy()
+								del player[positions[t][6]].shot[positions[t][7]]
 
 			####envoie####
 
@@ -212,31 +200,42 @@ class mainWorker(threading.Thread):
 			except socket.gaierror:
 				print("Not found!")
 
-	def collision_mur(self, pos_x, pos_y, b_size_x, b_size_y):
-		print(pos_x, " ", pos_y, " ", b_size_x, " ", b_size_y)
-
-		pos = [[pos_x, pos_y], [pos_x+b_size_x, pos_y], [pos_x+b_size_x, pos_y+b_size_y], [pos_x, pos_y+b_size_y]]
+	def collision_mur(self, entite, pos_x, pos_y, b_size_x, b_size_y, angle):
+	
+		if entite != 0 and entite != 4:
+			b_size_x, b_size_y = self.hitbox_missile(angle)
+	
+		pos = [[math.ceil(pos_x), math.ceil(pos_y)], [math.ceil(pos_x+b_size_x), math.ceil(pos_y)], [math.ceil(pos_x+b_size_x), math.ceil(pos_y+b_size_y)], [math.ceil(pos_x), math.ceil(pos_y+b_size_y)]]
 		for n in range(0, 3):
 			try:
 				tableau.index(pos[n])
-
 				return 0
 				break	
 			except ValueError:
-				pass
-		return 1
+				return 1
 
-	def collision(self, pos_x1,pos_y1,b_size_x, b_size_y, pos_x2, pos_y2, b_size_x2, b_size_y2):
+	def hitbox_missile(self, angle):
+		self.b_size_missile_x = 16
+		self.b_size_missile_y = 6
+		self.b_size_x = math.ceil(self.b_size_missile_x * math.cos(angle))
+		self.b_size_y = math.ceil(b_size_missile_y * math.sin(angle))
+		return self.b_size_x, self.b_size_y
+
+	def collision(self, entite, pos_x1,pos_y1,b_size_x, b_size_y, entite2, pos_x2, pos_y2, b_size_x2, b_size_y2, angle):
+
+
+		if entite != 0 and entite != 4:
+			b_size_x, b_size_y = self.hitbox_missile(angle)
+		if entite2 != 0 and entite2 != 4:
+			b_size_x2, b_size_y2 = self.hitbox_missile(angle)
+
 		if pos_x1 <= pos_x2 and pos_x1 + b_size_x >= pos_x2:
 			if pos_y1 <= pos_y2 and pos_y1 + b_size_y >= pos_y2:
-
 				return 0
 		elif pos_x2 <= pos_x1 and pos_x2 + b_size_x2 >= pos_x1:
 			if pos_y2 <= pos_y1 and pos_y2 + b_size_y2 >= pos_y1:
-
 				return 0
 		return 1
-
 
 
 
@@ -251,6 +250,15 @@ class user():
 		self.password = password
 		self.position_x = 0
 		self.position_y = 0
+		try:
+			if player[0].isAlive == 1:
+				self.position_x = 1200
+				self.position_y = 600
+		except IndexError:
+			self.position_x = 25
+			self.position_y = 25
+
+
 		self.angle = 0             #Angle en radian
 		self.isAlive = 1	   	   #Est-ce que je joueur est en vie
 		self.stepRange = 8		   #On se déplace de x px en x px ---> vitesse  
@@ -359,10 +367,10 @@ def connection(name, password):
 
 
 
-#try:
-#	initMap()
-#except:
-#	pass
+try:
+	initMap()
+except:
+	pass
 
 
 
