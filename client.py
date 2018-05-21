@@ -187,7 +187,7 @@ while continuer==1:
             position_perso1_1=position_perso.move(x1,y1)
             canon1_1 = pygame.transform.rotate(canon1,-math.degrees(liste[5]))
             position_canon1_1 = position_perso1_1.move(-((canon1_1.get_height()-56)/2),-((canon1_1.get_height()-56)/2))
-            if liste[6]==1:
+            if liste[6]==0:
                 perso1 = perso1_1
                 perso1 = pygame.transform.rotate(perso1_1, 90)
                 
@@ -201,7 +201,7 @@ while continuer==1:
             position_perso2_1=position_perso.move(x2,y2)
             canon2_1 = pygame.transform.rotate(canon2,-math.degrees(liste[5]))
             position_canon2_1 = position_perso2_1.move(-((canon2_1.get_height()-56)/2),-((canon2_1.get_height()-56)/2))
-            if liste[6]==1:
+            if liste[6]==0:
                 perso2 = perso2_1
                 perso2 = pygame.transform.rotate(perso2_1, 90)
                 
