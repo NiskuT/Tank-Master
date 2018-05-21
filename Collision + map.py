@@ -31,7 +31,10 @@ def hitbox_missile(self, angle):
 #l'angle est en radian
 #les positions sont en entiers
 
-def collision_mur(self, pos_x, pos_y, b_size_x, b_size_y):
+def collision_mur(self, entite, pos_x, pos_y, b_size_x, b_size_y, angle):
+	
+	if entite != 0 and entite != 4:
+		b_size_x, b_size_y = hitbox_missile(angle)
 	
 	pos = [[math.ceil(pos_x), math.ceil(pos_y)], [math.ceil(pos_x+b_size_x), math.ceil(pos_y)], [math.ceil(pos_x+b_size_x), math.ceil(pos_y+b_size_y)], [math.ceil(pos_x), math.ceil(pos_y+b_size_y)]]
 	for n in range(0, 3):
@@ -46,10 +49,13 @@ def collision_mur(self, pos_x, pos_y, b_size_x, b_size_y):
 
 #collision entre les entitées
 
-def collision(pos_x1,pos_y1,b_size_x, b_size_y, pos_x2, pos_y2, b_size_x2, b_size_y2, angle):
+def collision(self, entite, pos_x1,pos_y1,b_size_x, b_size_y, entite2, pos_x2, pos_y2, b_size_x2, b_size_y2, angle):
 
 
-
+	if entite != 0 and entite != 4:
+		b_size_x, b_size_y = hitbox_missile(angle)
+	if entite2 != 0 and entite2 != 4:
+		b_size_x2, b_size_y2 = hitbox_missile(angle)
 
 	if pos_x1 <= pos_x2 and pos_x1 + b_size_x >= pos_x2:
 		if pos_y1 <= pos_y2 and pos_y1 + b_size_y >= pos_y2:
