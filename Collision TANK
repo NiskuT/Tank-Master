@@ -38,3 +38,40 @@ def tank_colision(x,y,E):
     if boom==1:
         print(boom,"x1= ",x1," et y1= ",y1)
     return(boom,E)
+
+#Definition colision du missile
+def missile_colision(x,y,angle,E):
+    longueur=int(cos(90-angle)*6+cos(angle)*16)
+    largeur=int(sin(90-angle)*6+sin(angle)*16)
+    if angle < 90:
+        if E[largeur+y][longueur+x]==1:
+            boom=1
+        else :
+            if E[largeur+y][longueur+x]==2:
+                boom=1
+                tank=2
+    else:
+        if angle <180:
+            if E[largeur+y][x]==1:
+                boom=1
+            else :
+                if E[largeur+y][x]==2:
+                    boom=1
+                    tank=2
+        else:
+            if angle <270:
+                if E[y][x]==1:
+                    boom=1
+                else :
+                    if E[y][x]==2:
+                        boom=1
+                        tank=2
+            else:
+                if angle <360:
+                    if E[y][longueur+x]==1:
+                        boom=1
+                    else :
+                        if E[y][longueur+x]==2:
+                            boom=1
+                            tank=2
+    return(boom,tank)
