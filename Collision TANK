@@ -1,0 +1,31 @@
+#Création de la map
+filin = open('MAP2_2.txt','r')
+E=[]
+for i in range(675):
+    sl=[]
+    c = filin.readline()
+    #print(c)
+    for j in range(len(c)):
+        if (c[j] != ' ') and (c[j]!='\n'):
+            sl.append(int(c[j]))
+    E.append(sl)
+filin.close()
+
+
+                boom = 0
+                for i in range (56):
+                    if E[y1][i+x1]==1:
+                        boom=1
+                    else:
+                        if E[y1+56][i+x1]==1:
+                            boom=1
+
+                if boom != 0:
+                    for i in range (56):
+                        if E[i+y1][x1]==1:
+                            boom=1
+                        else:
+                            if E[i+y1][x1+56]==1:
+                                boom=1
+                if boom==1:
+                    print(boom,"x1= ",x1," et y1= ",y1)
