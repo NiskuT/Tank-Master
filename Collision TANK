@@ -11,6 +11,8 @@ for i in range(675):
     E.append(sl)
 filin.close()
 
+
+#Definition colision tank et integration a la map de la position
 def tank_colision(x,y,E):
     boom = 0
     for i in range (56):
