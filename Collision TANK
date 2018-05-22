@@ -11,28 +11,28 @@ for i in range(675):
     E.append(sl)
 filin.close()
 
-            def tank_colision(x,y)
-                boom = 0
-                for i in range (56):
-                    if E[y1][i+x1]==1:
-                        boom=1
-                    else:
-                        if E[y1+56][i+x1]==1:
-                            boom=1
-                        else:
-                            E[y1+56][i+x1]=2
-                            E[y1][i+x1]=2
+def tank_colision(x,y,E):
+    boom = 0
+    for i in range (56):
+        if E[y1][i+x1]==1:
+            boom=1
+        else:
+            if E[y1+56][i+x1]==1:
+                boom=1
+            else:
+                E[y1+56][i+x1]=2
+                E[y1][i+x1]=2
 
-                if boom != 0:
-                    for i in range (56):
-                        if E[i+y1][x1]==1:
-                            boom=1
-                        else:
-                            if E[i+y1][x1+56]==1:
-                                boom=1
-                            else:
-                                E[i+y1][x1]=2
-                                E[i+y1][x1+56]=2
-                if boom==1:
-                    print(boom,"x1= ",x1," et y1= ",y1)
-                return(boom)
+    if boom != 0:
+        for i in range (56):
+            if E[i+y1][x1]==1:
+                boom=1
+            else:
+                if E[i+y1][x1+56]==1:
+                    boom=1
+                else:
+                    E[i+y1][x1]=2
+                    E[i+y1][x1+56]=2
+    if boom==1:
+        print(boom,"x1= ",x1," et y1= ",y1)
+    return(boom,E)
