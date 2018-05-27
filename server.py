@@ -15,10 +15,10 @@ mainLock = RLock()
 workLocker = RLock()
 player = []
 needToDO =[]
-allIP =["192.168.1.38"]
+allIP =["localhost"]
 b_size_missile_x = -16
 b_size_missile_y = -6
-tableau = []
+E = []
 
 
 socketTCP = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -26,26 +26,21 @@ socketTCP.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 socketTCP.bind(("", 7089))
 
 socketUDP = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-socketUDP.bind(("192.168.1.38", 33108))
+socketUDP.bind(("localhost", 33108))
 
 
 def initMap():
-	map = open("Map2_2.txt", "r")
-	coordonnes = map.read()
-	ligne2 = coordonnes.split("\n")
-	tableau = []
-
-	for ligne_y in range(0,625):
-		for ligne_x in range(0,1200):
-			if ligne2[ligne_y][ligne_x] == "1":
-				co = [ligne_x, ligne_y]
-				tableau.append(co)
-			print("x= ", ligne_x,"y= ", ligne_y)
-	
-
-	print(tableau)
-
-	map.close()
+#Création de la map
+	filin = open('MAP2_2.txt','r')
+	for i in range(675):
+		sl=[]
+		c = filin.readline()
+		#print(c)
+		for j in range(len(c)):
+			if (c[j] != ' ') and (c[j]!='\n'):
+				sl.append(int(c[j]))
+		E.append(sl)
+	filin.close()
 
 class waitForConnection(threading.Thread):
 	def __init__(self):
@@ -114,6 +109,7 @@ class mainMover(threading.Thread):
 
 	def run(self):
 		while(1):
+			#time.sleep(.001)
 			action = []
 			with mainLock:
 				try:
@@ -147,7 +143,7 @@ class mainWorker(threading.Thread):
 			####missiles#####
 			for k in range(2):
 				try:
-					positions.append([player[k].isAlive,player[k].tailleX, player[k].tailleY, round(player[k].position_x, 2), round(player[k].position_y,2) , round(player[k].angle,2) , player[k].chenille, k])
+					positions.append([player[k].isAlive,player[k].tailleX, player[k].tailleY, int(player[k].position_x), int(player[k].position_y) , round(player[k].angle,2) , player[k].chenille, k])
 				except IndexError:
 					positions.append([0,0,0,0,0,0,0,0])
 
@@ -155,7 +151,7 @@ class mainWorker(threading.Thread):
 					try:
 						with workLocker:
 							player[k].shot[x].move()
-						positions.append([player[k].shot[x].state, player[k].shot[x].tailleX, player[k].shot[x].tailleY, round(player[k].shot[x].x,2) , round(player[k].shot[x].y,2), round(player[k].shot[x].angle,2) , k, x])
+						positions.append([player[k].shot[x].state, player[k].shot[x].tailleX, player[k].shot[x].tailleY, int(player[k].shot[x].x) , int(player[k].shot[x].y), round(player[k].shot[x].angle,2) , k, x])
 					except IndexError:
 						positions.append([0,0,0,0,0,0,0,0])
 
@@ -163,22 +159,27 @@ class mainWorker(threading.Thread):
 			####colisions######
 			for t in range(len(positions)):
 				if positions[t][0]== 1 :
-					if (self.collision_mur(t, positions[t][3], positions[t][4], positions[t][1],positions[t][2] , positions[t][5])) == 0:
-						if t == 0 or t == 4:
+					if t == 4 or t==0:
+						if ((self.collision_mur(positions[t][3], positions[t][4], 56, 56)) == 1):
 							player[positions[t][7]].kill(False)
-						else:
+					
+					else:
+						player[positions[t][6]].shot[positions[t][7]].tailleX, player[positions[t][6]].shot[positions[t][7]].tailleY = self.hitbox_missile(positions[t][5])
+						if self.collision_mur(positions[t][3], positions[t][4], positions[t][1], positions[t][2]) == 1:
 							player[positions[t][6]].shot[positions[t][7]].destroy()
-							player[positions[t][6]].shot[positions[t][7]]
 
-					for u in range(len(positions)):
-						if t == u:
-							continue
-						elif self.collision(t, positions[t][3], positions[t][4], positions[t][1], positions[t][2], u,  positions[u][3], positions[u][4], positions[u][1], positions[u][2], positions[t][5]) == 0:
-							if t == 0 or t == 4:
-								player[positions[t][7]].kill(False)
-							else:
-								player[positions[t][6]].shot[positions[t][7]].destroy()
-								del player[positions[t][6]].shot[positions[t][7]]
+					#for u in range(len(positions)):
+					#	if t == u:
+					#		continue
+					#	elif self.collision(t, positions[t][3], positions[t][4], positions[t][1], positions[t][2], u,  positions[u][3], positions[u][4], positions[u][1], positions[u][2], positions[t][5]) == 0:
+					#		if t == 0 or t == 4:
+					#			player[positions[t][7]].kill(False)
+					#		else:
+					#			try:
+					#				player[positions[t][6]].shot[positions[t][7]].destroy()
+					#				del player[positions[t][6]].shot[positions[t][7]]
+					#			except IndexError:
+					#				pass
 
 			####envoie####
 
@@ -200,25 +201,33 @@ class mainWorker(threading.Thread):
 			except socket.gaierror:
 				print("Not found!")
 
-	def collision_mur(self, entite, pos_x, pos_y, b_size_x, b_size_y, angle):
+	def collision_mur(self, x1, y1, s1, s2):
 	
-		if entite != 0 and entite != 4:
-			b_size_x, b_size_y = self.hitbox_missile(angle)
-	
-		pos = [[math.ceil(pos_x), math.ceil(pos_y)], [math.ceil(pos_x+b_size_x), math.ceil(pos_y)], [math.ceil(pos_x+b_size_x), math.ceil(pos_y+b_size_y)], [math.ceil(pos_x), math.ceil(pos_y+b_size_y)]]
-		for n in range(0, 3):
-			try:
-				tableau.index(pos[n])
-				return 0
-				break	
-			except ValueError:
-				return 1
+		boom = 0
+		for i in range (s1):
+			if E[y1][i+x1]==1:
+				boom=1
+			else:
+				if E[y1+s1][i+x1]==1:
+					boom=1
+
+		if boom != 0:
+			for i in range (s2):
+				if E[i+y1][x1]==1:
+					boom=1
+				else:
+					if E[i+y1][x1+s2]==1:
+						boom=1
+		#if boom==1:
+		#	print(boom,"x1= ",x1," et y1= ",y1)
+
+		return boom
 
 	def hitbox_missile(self, angle):
 		self.b_size_missile_x = 16
 		self.b_size_missile_y = 6
 		self.b_size_x = math.ceil(self.b_size_missile_x * math.cos(angle))
-		self.b_size_y = math.ceil(b_size_missile_y * math.sin(angle))
+		self.b_size_y = math.ceil(self.b_size_missile_y * math.sin(angle))
 		return self.b_size_x, self.b_size_y
 
 	def collision(self, entite, pos_x1,pos_y1,b_size_x, b_size_y, entite2, pos_x2, pos_y2, b_size_x2, b_size_y2, angle):
@@ -252,8 +261,8 @@ class user():
 		self.position_y = 0
 		try:
 			if player[0].isAlive == 1:
-				self.position_x = 1200
-				self.position_y = 600
+				self.position_x = 1120
+				self.position_y = 550
 		except IndexError:
 			self.position_x = 25
 			self.position_y = 25
@@ -274,16 +283,16 @@ class user():
 			pass
 		elif XY == 1:
 			self.position_y += self.stepRange
-			self.chenille = 0
+			self.chenille = 1
 		elif XY == 2:
 			self.position_x += self.stepRange
-			self.chenille = 1
+			self.chenille = 0
 		elif XY == 3:
 			self.position_y -= self.stepRange
-			self.chenille = 0
+			self.chenille = 1
 		elif XY == 4:
 			self.position_x -= self.stepRange
-			self.chenille = 1
+			self.chenille = 0
 
 		try:
 			if len(self.shot) == 3 and self.shot[2].t > 50 :
@@ -304,19 +313,19 @@ class user():
 		if end == False:
 
 			
-			self.position_x = 0
-			self.position_y = 0
+			self.position_x = 40
+			self.position_y = 40
 			self.isAlive = 1
 
 		else:
 			pass
 
-		def tir(self):
+	def tir(self):
 
-			if len(self.shot) < self.maxMissile:
-				self.shot.append(missile((self.position_x+28), (self.position_y+28), self.angle))
-			else:
-				pass
+		if len(self.shot) < self.maxMissile:
+			self.shot.append(missile((self.position_x+28), (self.position_y+28), self.angle))
+		else:
+			pass
 
 
 
@@ -333,27 +342,27 @@ class missile():
 		self.tailleX = -16
 		self.tailleY = -6
 
-		self.stepRange = 1
-		self.t = 1
+		self.stepRange = 15
+		self.t = 0
 		self.angle = angle
 		self.x = a
 		self.y = b
 
 	def move(self):
 		#accélération:
-		self.x = (1/2)*self.stepRange*math.cos(self.angle)*self.t*self.t+self.a
-		self.y = (1/2)*self.stepRange*math.sin(self.angle)*self.t*self.t+self.b
+		#self.x = int((1/2)*self.stepRange*math.cos(self.angle)*self.t*self.t+self.a)
+		#self.y = int((1/2)*self.stepRange*math.sin(self.angle)*self.t*self.t+self.b)
 
 		#sans accélération
-		#self.x = (1/2)*self.stepRange*math.cos(self.angle)*self.t+self.a
-		#self.y = (1/2)*self.stepRange*math.sin(self.angle)*self.t+self.b
+		self.x = 0.35*self.stepRange*math.cos(self.angle)*self.t+self.a
+		self.y = 0.35*self.stepRange*math.sin(self.angle)*self.t+self.b
 	
 		#déccelération
 		#x=(500-2*t)*cos(2)*t+4000
 		#y=(500-2*t)*sin(2)*t+6250
 
 		self.t += 1
-		if self.t > 50:
+		if self.t > 500:
 			self.destroy()
 
 	def destroy(self):
