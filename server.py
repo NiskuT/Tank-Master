@@ -168,18 +168,21 @@ class mainWorker(threading.Thread):
 						if self.collision_mur(positions[t][3], positions[t][4], positions[t][1], positions[t][2]) == 1:
 							player[positions[t][6]].shot[positions[t][7]].destroy()
 
-					#for u in range(len(positions)):
-					#	if t == u:
-					#		continue
-					#	elif self.collision(t, positions[t][3], positions[t][4], positions[t][1], positions[t][2], u,  positions[u][3], positions[u][4], positions[u][1], positions[u][2], positions[t][5]) == 0:
-					#		if t == 0 or t == 4:
-					#			player[positions[t][7]].kill(False)
-					#		else:
-					#			try:
-					#				player[positions[t][6]].shot[positions[t][7]].destroy()
-					#				del player[positions[t][6]].shot[positions[t][7]]
-					#			except IndexError:
-					#				pass
+			for u in range(len(positions)):
+				for v in range(len(positions)):
+					if positions[u][0]== 1 and positions[v][0]== 1 and u != v:
+						if self.collision(positions[u][3], positions[u][4], positions[u][1], positions[u][2], positions[v][3], positions[v][4], positions[v][1], positions[v][2]) == 0:
+							if u == 0 or u == 4:
+								player[positions[u][7]].kill(False)
+							else:
+								player[positions[u][6]].shot[positions[u][7]].destroy()
+
+							if v == 0 or v == 4:
+								player[positions[v][7]].kill(False)
+							else:
+								player[positions[v][6]].shot[positions[v][7]].destroy()
+
+
 
 			####envoie####
 
@@ -204,22 +207,25 @@ class mainWorker(threading.Thread):
 	def collision_mur(self, x1, y1, s1, s2):
 	
 		boom = 0
-		for i in range (s1):
-			if E[y1][i+x1]==1:
-				boom=1
-			else:
-				if E[y1+s1][i+x1]==1:
-					boom=1
-
-		if boom != 0:
-			for i in range (s2):
-				if E[i+y1][x1]==1:
+		try:
+			for i in range (s1):
+				if E[y1][i+x1]==1:
 					boom=1
 				else:
-					if E[i+y1][x1+s2]==1:
+					if E[y1+s1][i+x1]==1:
 						boom=1
+
+			if boom != 0:
+				for i in range (s2):
+					if E[i+y1][x1]==1:
+						boom=1
+					else:
+						if E[i+y1][x1+s2]==1:
+							boom=1
 		#if boom==1:
 		#	print(boom,"x1= ",x1," et y1= ",y1)
+		except IndexError:
+			boom = 1
 
 		return boom
 
@@ -230,13 +236,7 @@ class mainWorker(threading.Thread):
 		self.b_size_y = math.ceil(self.b_size_missile_y * math.sin(angle))
 		return self.b_size_x, self.b_size_y
 
-	def collision(self, entite, pos_x1,pos_y1,b_size_x, b_size_y, entite2, pos_x2, pos_y2, b_size_x2, b_size_y2, angle):
-
-
-		if entite != 0 and entite != 4:
-			b_size_x, b_size_y = self.hitbox_missile(angle)
-		if entite2 != 0 and entite2 != 4:
-			b_size_x2, b_size_y2 = self.hitbox_missile(angle)
+	def collision(self,     pos_x1, pos_y1,  b_size_x, b_size_y,       pos_x2, pos_y2,  b_size_x2, b_size_y2):
 
 		if pos_x1 <= pos_x2 and pos_x1 + b_size_x >= pos_x2:
 			if pos_y1 <= pos_y2 and pos_y1 + b_size_y >= pos_y2:
@@ -246,9 +246,6 @@ class mainWorker(threading.Thread):
 				return 0
 		return 1
 
-
-
-		
 
 
 
@@ -338,7 +335,7 @@ class missile():
 		self.a = a
 		self.b = b
 
-		self.state = 1
+		self.state = 0
 		self.tailleX = -16
 		self.tailleY = -6
 
@@ -362,6 +359,8 @@ class missile():
 		#y=(500-2*t)*sin(2)*t+6250
 
 		self.t += 1
+		if self.t > 20:
+			self.state = 1
 		if self.t > 500:
 			self.destroy()
 
