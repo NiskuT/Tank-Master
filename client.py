@@ -8,8 +8,16 @@ from threading import Thread, RLock
 import threading
 import pickle
 import time
+import sys
+
 
 #Variables
+IP = "localhost"
+try:
+    IP = sys.argv[1]
+except:
+    pass
+
 tir1=0
 angle1=0
 deplacement1=0
@@ -34,7 +42,7 @@ def raffraichissement():
     pygame.display.flip()
 
 def connect(name):
-        TCP_IP = "192.168.1.38"
+        TCP_IP = IP
         TCP_PORT = 7089
 
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -43,7 +51,7 @@ def connect(name):
         data = (s.recv(1024)).decode('utf-8')
         s.close()
 
-        print("received data:", data)
+        #print("received data:", data)
 
 
         mdp = data[0]+data[1]+data[2]+data[3]
@@ -58,7 +66,7 @@ class udpSocket(threading.Thread):
         def __init__(self):
                 threading.Thread.__init__(self)
                 self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) 
-                UDP_IP = "192.168.1.38"
+                UDP_IP = IP
                 UDP_PORT = 12000
                 self.sock.bind((UDP_IP, UDP_PORT))
                 self.pos = [[1,0,0,40,30,60,0],[1,0,0,20,10,30,0],[1,0,0,50,100,190,0],[0,0,0,20,10,30,0],[1,0,0,400,300,200,1],[0,0,0,20,10,30,0],[0,0,0,20,10,30,0],[0,0,0,20,10,30,0]]
@@ -66,11 +74,11 @@ class udpSocket(threading.Thread):
         def run(self):
                 while(1):
                         with lock:
-                                self.sock.sendto(pickle.dumps(donnee), ("192.168.1.38", 33108))
+                                self.sock.sendto(pickle.dumps(donnee), (IP, 33108))
                         time.sleep(.035)
                         data, addr = self.sock.recvfrom(2048)
                         self.pos = pickle.loads(data)
-                        print("\n",self.pos)
+                        #print("\n",self.pos)
 
 
 
@@ -103,6 +111,10 @@ while continuer==0:
 #Chargement et collage du fond
 fond = pygame.image.load("MAP2.png").convert()
 fenetre.blit(fond, (0,0))
+
+#etat chennilles
+etat1 = 0
+etat2 = 0
 
 #Chargement et collage du personnage
 perso1 = pygame.image.load("tank1.png").convert_alpha()
@@ -187,9 +199,14 @@ while continuer==1:
             position_perso1_1=position_perso.move(x1,y1)
             canon1_1 = pygame.transform.rotate(canon1,-math.degrees(liste[5]))
             position_canon1_1 = position_perso1_1.move(-((canon1_1.get_height()-56)/2),-((canon1_1.get_height()-56)/2))
-            if liste[6]==0:
-                perso1 = perso1_1
-                perso1 = pygame.transform.rotate(perso1_1, 90)
+            
+
+            if liste[6]==1 and etat1 == 0:
+                perso1 = pygame.transform.rotate(perso1, 90)
+                etat1 = 1
+            elif liste[6]==0 and etat1 == 1:
+                perso1 = pygame.transform.rotate(perso1, -90)
+                etat1 = 0
                 
 
             #Tank2
@@ -201,14 +218,20 @@ while continuer==1:
             position_perso2_1=position_perso.move(x2,y2)
             canon2_1 = pygame.transform.rotate(canon2,-math.degrees(liste[5]))
             position_canon2_1 = position_perso2_1.move(-((canon2_1.get_height()-56)/2),-((canon2_1.get_height()-56)/2))
-            if liste[6]==0:
-                perso2 = perso2_1
-                perso2 = pygame.transform.rotate(perso2_1, 90)
+            
+
+            if liste[6]==1 and etat2 == 0:
+                perso2 = pygame.transform.rotate(perso2, 90)
+                etat2 = 1
+            elif liste[6]==0 and etat2 == 1:
+                perso2 = pygame.transform.rotate(perso2, -90)
+                etat2 = 0
+                
+
                 
             #Missile1_1
             liste=tableau[1]
             if liste[0]==0:
-                missile1_1=missile
                 position_missile1_1=position_missile.move(100,645)
             else:
                 position_missile1_1=position_missile.move(liste[3],liste[4])
@@ -217,7 +240,6 @@ while continuer==1:
             #Missile1_2
             liste=tableau[2]
             if liste[0]==0:
-                missile1_2=missile
                 position_missile1_2=position_missile.move(150,645)
             else:
                 position_missile1_2=position_missile.move(liste[3],liste[4])
@@ -227,7 +249,6 @@ while continuer==1:
             #Missile1_3
             liste=tableau[3]
             if liste[0]==0:
-                missile1_3=missile
                 position_missile1_3=position_missile.move(200,645)
             else:
                 position_missile1_3=position_missile.move(liste[3],liste[4])
@@ -237,7 +258,6 @@ while continuer==1:
             #Missile2_1
             liste=tableau[5]
             if liste[0]==0:
-                missile2_1=missile
                 position_missile2_1=position_missile.move(400,645)
             else:
                 position_missile2_1=position_missile.move(liste[3],liste[4])
@@ -247,7 +267,6 @@ while continuer==1:
             #Missile2_2
             liste=tableau[6]
             if liste[0]==0:
-                missile2_2=missile
                 position_missile2_2=position_missile.move(450,645)
             else:
                 position_missile2_2=position_missile.move(liste[3],liste[4])
@@ -257,7 +276,6 @@ while continuer==1:
             #Missile2_3
             liste=tableau[7]
             if liste[0]==0:
-                missile2_3=missile
                 position_missile2_3=position_missile.move(500,645)
             else:
                 position_missile2_3=position_missile.move(liste[3],liste[4])
