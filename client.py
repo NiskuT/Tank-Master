@@ -232,6 +232,8 @@ while continuer==1:
             #Missile1_1
             liste=tableau[1]
             if liste[0]==0:
+                missile1_1=missile
+                position_missile1_1=position_missile
                 position_missile1_1=position_missile.move(100,645)
             else:
                 position_missile1_1=position_missile.move(liste[3],liste[4])
@@ -240,6 +242,8 @@ while continuer==1:
             #Missile1_2
             liste=tableau[2]
             if liste[0]==0:
+                missile1_2=missile
+                position_missile1_2=position_missile
                 position_missile1_2=position_missile.move(150,645)
             else:
                 position_missile1_2=position_missile.move(liste[3],liste[4])
@@ -249,6 +253,8 @@ while continuer==1:
             #Missile1_3
             liste=tableau[3]
             if liste[0]==0:
+                missile1_3=missile
+                position_missile1_3=position_missile
                 position_missile1_3=position_missile.move(200,645)
             else:
                 position_missile1_3=position_missile.move(liste[3],liste[4])
@@ -258,6 +264,8 @@ while continuer==1:
             #Missile2_1
             liste=tableau[5]
             if liste[0]==0:
+                missile12_1=missile
+                position_missile2_1=position_missile
                 position_missile2_1=position_missile.move(400,645)
             else:
                 position_missile2_1=position_missile.move(liste[3],liste[4])
@@ -267,6 +275,8 @@ while continuer==1:
             #Missile2_2
             liste=tableau[6]
             if liste[0]==0:
+                missile2_2=missile
+                position_missile2_2=position_missile
                 position_missile2_2=position_missile.move(450,645)
             else:
                 position_missile2_2=position_missile.move(liste[3],liste[4])
@@ -276,6 +286,8 @@ while continuer==1:
             #Missile2_3
             liste=tableau[7]
             if liste[0]==0:
+                missile2_3=missile
+                position_missile2_3=position_missile
                 position_missile2_3=position_missile.move(500,645)
             else:
                 position_missile2_3=position_missile.move(liste[3],liste[4])
